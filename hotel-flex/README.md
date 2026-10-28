@@ -51,7 +51,7 @@ O app descobre sozinho em qual pasta está, então `http://localhost/PROTO_IA_27
 
 1. No WAMP, ative **Apache → Módulos Apache → rewrite_module**.
 2. Use os dois `.htaccess` do projeto (`hotel-flex/.htaccess` e `hotel-flex/public/.htaccess`) sem `RewriteBase`.
-3. Rode `composer install` dentro de `hotel-flex/`. Sem a pasta `vendor/`, a página dá erro 500.
+3. O `composer install` é opcional para rodar o app: sem a pasta `vendor/`, ele usa o carregador próprio (`src/autoload.php`). O Composer só é necessário para rodar os testes.
 4. Crie o `.env` a partir do `.env.example`. No WAMP, o padrão é `DB_HOST=localhost`, `DB_ADMIN_USER=root` e `DB_ADMIN_PASSWORD=` vazio.
 5. Crie o banco `hotelflex` e o usuário da aplicação no phpMyAdmin (aba SQL):
 

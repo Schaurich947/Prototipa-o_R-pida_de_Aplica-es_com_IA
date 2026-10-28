@@ -5,7 +5,8 @@ declare(strict_types=1);
 use HotelFlex\Config\Env;
 use HotelFlex\Database\ConnectionFactory;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+$composerAutoload = dirname(__DIR__) . '/vendor/autoload.php';
+require is_file($composerAutoload) ? $composerAutoload : dirname(__DIR__) . '/src/autoload.php';
 
 if (PHP_SAPI !== 'cli') {
     exit(1);

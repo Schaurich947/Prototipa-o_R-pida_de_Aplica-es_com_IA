@@ -7,6 +7,8 @@ if (PHP_SAPI === 'cli-server' && is_file(__DIR__ . parse_url((string) $_SERVER['
     return false;
 }
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+$projectRoot = dirname(__DIR__);
+$composerAutoload = $projectRoot . '/vendor/autoload.php';
+require is_file($composerAutoload) ? $composerAutoload : $projectRoot . '/src/autoload.php';
 
-HotelFlex\Bootstrap\App::run(dirname(__DIR__));
+HotelFlex\Bootstrap\App::run($projectRoot);
