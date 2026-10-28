@@ -13,7 +13,7 @@ enum RequestType: string
     {
         return match ($this) {
             self::EarlyCheckIn => 'Entrada antecipada',
-            self::LateCheckout => 'Late check-out',
+            self::LateCheckout => 'Saída tardia',
         };
     }
 }

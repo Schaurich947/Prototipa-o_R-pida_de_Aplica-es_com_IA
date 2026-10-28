@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HotelFlex\Bootstrap;
 
+use HotelFlex\Domain\DomainException;
 use HotelFlex\View\View;
 use Throwable;
 
@@ -14,15 +15,21 @@ final class ErrorHandler
     {
         ini_set('display_errors', '0');
         set_exception_handler(static function (Throwable $error) use ($view, $isDebug): void {
+            // Business errors on screens (e.g. another guest's reservation id) are shown as "not found".
+            if ($error instanceof DomainException) {
+                self::renderNotFound($view, $error->getMessage());
+
+                return;
+            }
             error_log(sprintf('[hotelflex] %s: %s em %s:%d', $error::class, $error->getMessage(), $error->getFile(), $error->getLine()));
             self::renderServerError($view, $isDebug ? $error->getMessage() : null);
         });
     }
 
-    public static function renderNotFound(View $view): void
+    public static function renderNotFound(View $view, string $message = 'O endereço acessado não existe.'): void
     {
         http_response_code(404);
-        $view->render('errors/404', ['pageTitle' => 'Página não encontrada'], 'base');
+        $view->render('errors/404', ['pageTitle' => 'Não encontrado', 'message' => $message], 'base');
     }
 
     private static function renderServerError(View $view, ?string $debugMessage): void

@@ -17,9 +17,15 @@ final class ServiceRequestRepository
     }
 
     /** @return list<ServiceRequest> */
-    public function findAll(): array
+    public function findByHotel(int $hotelId): array
     {
-        $statement = $this->connection->query('SELECT * FROM service_requests ORDER BY created_at DESC, id DESC');
+        $statement = $this->connection->prepare(
+            'SELECT req.* FROM service_requests req
+             JOIN reservations res ON res.id = req.reservation_id
+             JOIN rooms ON rooms.id = res.room_id
+             WHERE rooms.hotel_id = :hotel_id ORDER BY req.created_at DESC, req.id DESC',
+        );
+        $statement->execute(['hotel_id' => $hotelId]);
 
         return array_map(ServiceRequest::fromRow(...), $statement->fetchAll());
     }
@@ -78,5 +84,14 @@ final class ServiceRequestRepository
         $statement->execute(['status' => $status->value, 'resolved_at' => $resolvedAt->format('Y-m-d H:i:s'), 'id' => $requestId]);
 
         return $statement->rowCount() === 1;
+    }
+
+    /** Used when the reservation changes dates or is cancelled. */
+    public function cancelPendingForReservation(int $reservationId, DateTimeImmutable $resolvedAt): void
+    {
+        $statement = $this->connection->prepare(
+            "UPDATE service_requests SET status = 'cancelled', resolved_at = :resolved_at WHERE reservation_id = :reservation_id AND status = 'pending'",
+        );
+        $statement->execute(['resolved_at' => $resolvedAt->format('Y-m-d H:i:s'), 'reservation_id' => $reservationId]);
     }
 }

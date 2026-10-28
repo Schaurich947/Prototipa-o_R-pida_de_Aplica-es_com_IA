@@ -1,13 +1,21 @@
 <?php
 /**
  * @var HotelFlex\View\View $view
+ * @var HotelFlex\Domain\Hotel $hotel
+ * @var list<HotelFlex\Domain\Hotel> $hotelOptions
  * @var list<HotelFlex\Service\RequestView> $pendingViews
  * @var list<HotelFlex\Service\RequestView> $resolvedViews
  */
+$hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-picker', [
+    'action' => '/hotel/solicitacoes', 'name' => 'hotel', 'label' => 'Hotel',
+    'options' => toOptions($hotelOptions, static fn ($option) => $option->name),
+    'selectedId' => $hotel->id,
+]));
 ?>
 <?= $view->partial('page-header', [
-    'title' => 'Solicitações dos Hóspedes',
-    'description' => 'Confira e responda pedidos de entrada antecipada e late check-out.',
+    'title' => "Solicitações · {$hotel->name}",
+    'description' => 'Pedidos de entrada antecipada e saída tardia feitos pelos hóspedes.',
+    'actions' => $hotelPicker,
 ]) ?>
 
 <section class="space-y-3">

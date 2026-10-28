@@ -1,21 +1,31 @@
-# HotelFlex — MVP de Hotelaria Flexível
+# HotelFlex — Plataforma de Hospedagem Flexível
 
-Entrada antecipada quando o quarto fica pronto antes das 14h e late check-out cobrado por hora.
+Plataforma para vários hotéis: o hóspede reserva, entra mais cedo e sai mais tarde pagando por hora. O hotel libera quartos que ficaram prontos antes do horário.
 
 - **Páginas:** HTML + PHP (templates em `views/`).
 - **Backend:** PHP 8.2+ com MySQL/MariaDB via PDO e prepared statements.
 - **Estilo:** Tailwind CSS compilado, com os tokens visuais do shadcn/ui.
-- **JavaScript:** só para o slider de horas e a atualização automática das telas.
+- **JavaScript:** só para os sliders de horas, confirmações e atualização automática.
 
-## Telas
+## Perfis e telas
 
-| Perfil | Tela | Rota |
+| Perfil | Tela | O que faz |
 |---|---|---|
-| Recepção / Governança | Painel de Liberação e Horas Adicionais | `/hotel/liberacao` |
-| Recepção / Governança | Solicitações dos hóspedes | `/hotel/solicitacoes` |
-| Hóspede | Minha reserva (dados + faturamento) | `/hospede/reserva` |
-| Hóspede | Disponibilidade (entrada antecipada e late check-out) | `/hospede/disponibilidade` |
-| Administrador | Todas as telas acima, com seletor de hóspede | — |
+| Hóspede | Minhas reservas | Reservas em todos os hotéis: em andamento, próximas e histórico |
+| Hóspede | Detalhe da reserva | Pedir entrada antecipada/saída tardia, alterar datas, cancelar |
+| Hóspede | Nova reserva | Buscar quartos livres por data e cidade e reservar |
+| Recepção (do hotel) | Painel do dia | Chegadas de hoje (horário de entrada, liberar, check-in), hospedados (horário de saída, check-out) e limpeza |
+| Recepção (do hotel) | Solicitações | Aprovar ou recusar pedidos dos hóspedes |
+| Administrador | Tudo | Alterna entre hotéis e entre hóspedes |
+
+O hóspede cria a própria conta em `/cadastro`. Contas de demonstração (senha `Demo@1234`): `admin@hotelflex.test`, `recepcao.centro@hotelflex.test`, `recepcao.marazul@hotelflex.test` e `ana@hotelflex.test`.
+
+## Regras de horário
+
+- Cada hotel define a entrada e a saída padrão, a janela máxima (ex.: 8h–18h), as horas de tolerância grátis na entrada e o tempo de limpeza entre hóspedes.
+- O limite de horas antes da entrada depende de quem sai do mesmo quarto naquele dia. O limite depois da saída depende de quem chega. Sempre sobra o tempo de limpeza.
+- A entrada antecipada cobra só as horas além da tolerância. A saída tardia cobra todas as horas.
+- Ao alterar as datas, os horários flexíveis voltam ao padrão e os pedidos pendentes são cancelados.
 
 ## Como rodar
 
@@ -28,7 +38,7 @@ cp .env.example .env   # preencha usuário e senha do banco
 ```
 
 ```bash
-php bin/setup-database.php   # cria banco, usuário da aplicação, tabelas e dados de demonstração
+php bin/setup-database.php   # cria banco e usuário e RECRIA as tabelas (apaga os dados) com a demonstração
 ```
 
 ```bash
@@ -80,6 +90,6 @@ tests/             PHPUnit
 - **SQL:** só prepared statements nativos (`ATTR_EMULATE_PREPARES = false`).
 - **XSS:** toda saída passa por `e()`, e o CSP bloqueia scripts inline.
 - **Formulários:** CSRF em todo POST e validação no navegador e no servidor. O valor das horas é sempre recalculado no servidor.
-- **Perfis:** cada rota tem perfis permitidos. O hóspede só acessa a própria reserva, mesmo que altere o formulário.
 - **Erros:** os detalhes vão só para o log do servidor; o usuário vê uma página genérica.
-- **Limitação do MVP:** o login é de demonstração (escolha de perfil). Antes de produção, ele precisa de autenticação real.
+- **Login:** senhas com `password_hash`, mesma mensagem para e-mail inexistente e senha errada, e bloqueio temporário após 5 tentativas.
+- **Permissões:** a recepção só acessa o próprio hotel, e o hóspede só acessa as próprias reservas. Um id de outra conta responde "não encontrado".

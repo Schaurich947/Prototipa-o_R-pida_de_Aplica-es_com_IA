@@ -4,41 +4,49 @@ declare(strict_types=1);
 
 namespace HotelFlex\Bootstrap;
 
-use HotelFlex\Http\Controller\AuthController;
-use HotelFlex\Http\Controller\GuestController;
-use HotelFlex\Http\Controller\HotelController;
-use HotelFlex\Http\Controller\LiveUpdateController;
 use HotelFlex\Http\Navigation;
 use HotelFlex\Http\Response;
 use HotelFlex\Http\Router;
 
 final class Routes
 {
-    public static function register(
-        Router $router,
-        AuthController $auth,
-        HotelController $hotel,
-        GuestController $guest,
-        LiveUpdateController $live,
-    ): void {
+    /** Controllers are created lazily, so each request only builds what its route needs. */
+    public static function register(Router $router, Container $container): void
+    {
+        $auth = static fn (string $method) => static fn (...$args) => $container->authController()->$method(...$args);
+        $panel = static fn (string $method) => static fn (...$args) => $container->hotelPanelController()->$method(...$args);
+        $requests = static fn (string $method) => static fn (...$args) => $container->hotelRequestsController()->$method(...$args);
+        $guest = static fn (string $method) => static fn (...$args) => $container->guestReservationsController()->$method(...$args);
+        $booking = static fn (string $method) => static fn (...$args) => $container->bookingController()->$method(...$args);
+        $hotelRoles = Navigation::HOTEL_ROLES;
+        $guestRoles = Navigation::GUEST_ROLES;
+
         $router->get('/', static fn () => Response::redirect('/login'), null);
-        $router->get('/login', $auth->showLogin(...), null);
-        $router->post('/login', $auth->login(...), null);
-        $router->post('/logout', $auth->logout(...), Navigation::SIGNED_IN_ROLES);
+        $router->get('/login', $auth('showLogin'), null);
+        $router->post('/login', $auth('login'), null);
+        $router->get('/cadastro', $auth('showRegister'), null);
+        $router->post('/cadastro', $auth('register'), null);
+        $router->post('/logout', $auth('logout'), Navigation::SIGNED_IN_ROLES);
 
-        $router->get('/hotel/liberacao', $hotel->showReleasePanel(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/quartos/{id}/iniciar-limpeza', $hotel->startCleaning(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/quartos/{id}/marcar-limpo', $hotel->markClean(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/quartos/{id}/liberar', $hotel->releaseRoom(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/reservas/{id}/late-checkout', $hotel->updateLateCheckout(...), Navigation::HOTEL_ROLES);
-        $router->get('/hotel/solicitacoes', $hotel->showRequests(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/solicitacoes/{id}/aprovar', $hotel->approveRequest(...), Navigation::HOTEL_ROLES);
-        $router->post('/hotel/solicitacoes/{id}/recusar', $hotel->rejectRequest(...), Navigation::HOTEL_ROLES);
+        $router->get('/hotel/liberacao', $panel('showPanel'), $hotelRoles);
+        $router->post('/hotel/quartos/{id}/iniciar-limpeza', $panel('startCleaning'), $hotelRoles);
+        $router->post('/hotel/quartos/{id}/marcar-limpo', $panel('markClean'), $hotelRoles);
+        $router->post('/hotel/quartos/{id}/liberar', $panel('releaseRoom'), $hotelRoles);
+        $router->post('/hotel/reservas/{id}/check-in', $panel('checkIn'), $hotelRoles);
+        $router->post('/hotel/reservas/{id}/check-out', $panel('checkOut'), $hotelRoles);
+        $router->post('/hotel/reservas/{id}/horarios', $panel('updateHours'), $hotelRoles);
+        $router->get('/hotel/solicitacoes', $requests('showRequests'), $hotelRoles);
+        $router->post('/hotel/solicitacoes/{id}/aprovar', $requests('approveRequest'), $hotelRoles);
+        $router->post('/hotel/solicitacoes/{id}/recusar', $requests('rejectRequest'), $hotelRoles);
 
-        $router->get('/hospede/reserva', $guest->showReservation(...), Navigation::GUEST_ROLES);
-        $router->get('/hospede/disponibilidade', $guest->showAvailability(...), Navigation::GUEST_ROLES);
-        $router->post('/hospede/solicitacoes', $guest->createRequest(...), Navigation::GUEST_ROLES);
+        $router->get('/hospede/reservas', $guest('showList'), $guestRoles);
+        $router->get('/hospede/reservas/{id}', $guest('showDetail'), $guestRoles);
+        $router->post('/hospede/reservas/{id}/horarios', $guest('requestHours'), $guestRoles);
+        $router->post('/hospede/reservas/{id}/datas', $guest('changeDates'), $guestRoles);
+        $router->post('/hospede/reservas/{id}/cancelar', $guest('cancel'), $guestRoles);
+        $router->get('/hospede/nova-reserva', $booking('showSearch'), $guestRoles);
+        $router->post('/hospede/nova-reserva', $booking('book'), $guestRoles);
 
-        $router->get('/api/versao', $live->showVersion(...), Navigation::SIGNED_IN_ROLES);
+        $router->get('/api/versao', static fn () => $container->liveUpdateController()->showVersion(), Navigation::SIGNED_IN_ROLES);
     }
 }

@@ -5,99 +5,74 @@ declare(strict_types=1);
 namespace HotelFlex\Service;
 
 use HotelFlex\Database\TransactionRunner;
-use HotelFlex\Domain\Availability;
 use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\RequestStatus;
 use HotelFlex\Domain\RequestType;
-use HotelFlex\Domain\Reservation;
-use HotelFlex\Domain\RoomStatus;
-use HotelFlex\Domain\ServiceRequest;
-use HotelFlex\Repository\ReservationRepository;
-use HotelFlex\Repository\RoomRepository;
+use HotelFlex\Domain\ReservationStatus;
+use HotelFlex\Domain\User;
 use HotelFlex\Repository\ServiceRequestRepository;
 
+/** Guests ask for flexible hours; the hotel approves or rejects them. */
 final class RequestService
 {
     public function __construct(
         private readonly ServiceRequestRepository $requests,
-        private readonly ReservationRepository $reservations,
-        private readonly RoomRepository $rooms,
+        private readonly AccessGuard $guard,
+        private readonly StayViewFactory $stays,
         private readonly RoomService $roomService,
         private readonly TransactionRunner $transaction,
         private readonly Clock $clock,
     ) {
     }
 
-    public function createRequest(int $reservationId, RequestType $type, int $extraHours = 0): void
+    public function createRequest(User $actor, int $reservationId, RequestType $type, int $hours): void
     {
-        $reservation = $this->getReservation($reservationId);
+        $stay = $this->stays->build($this->guard->getOwnReservation($actor, $reservationId));
+        $this->assertCanRequest($stay, $type, $hours);
         if ($this->requests->hasPending($reservationId, $type)) {
-            throw new DomainException('Já existe uma solicitação pendente deste tipo.');
+            throw new DomainException('Já existe uma solicitação pendente deste tipo para a reserva.');
         }
-        $this->assertRequestIsValid($reservation, $type, $extraHours);
-        $hours = $type === RequestType::LateCheckout ? $extraHours : 0;
         $this->requests->create($reservationId, $type, $hours, $this->clock->now());
     }
 
-    public function approveRequest(int $requestId): void
+    public function approveRequest(User $actor, int $requestId): void
     {
-        $this->transaction->run(function () use ($requestId): void {
-            $request = $this->getPendingRequest($requestId);
-            $this->applyApproval($request);
-            $this->markResolved($requestId, RequestStatus::Approved);
+        $request = $this->guard->getManagedRequest($actor, $requestId);
+        $this->assertPending($request->status);
+        $this->transaction->run(function () use ($actor, $request): void {
+            $this->roomService->setFlexibleHours($actor, $request->reservationId, $request->type, $request->extraHours);
+            $this->markResolved($request->id, RequestStatus::Approved);
         });
     }
 
-    public function rejectRequest(int $requestId): void
+    public function rejectRequest(User $actor, int $requestId): void
     {
-        $this->getPendingRequest($requestId);
-        $this->markResolved($requestId, RequestStatus::Rejected);
+        $request = $this->guard->getManagedRequest($actor, $requestId);
+        $this->assertPending($request->status);
+        $this->markResolved($request->id, RequestStatus::Rejected);
     }
 
-    private function assertRequestIsValid(Reservation $reservation, RequestType $type, int $extraHours): void
+    private function assertCanRequest(StayView $stay, RequestType $type, int $hours): void
     {
-        $room = $this->rooms->findById($reservation->roomId) ?? throw new DomainException('Quarto não encontrado.');
-        if ($type === RequestType::LateCheckout) {
-            Availability::assertValidLateCheckoutHours($room, $extraHours);
-            if ($extraHours === 0) {
-                throw new DomainException('Selecione ao menos 1 hora adicional.');
-            }
-
-            return;
+        $status = $stay->reservation->status;
+        if (!$status->isActive()) {
+            throw new DomainException('Esta reserva não aceita mais alterações de horário.');
         }
-        if (!Availability::isEarlyVacant($room, $reservation)) {
-            throw new DomainException('O quarto ainda não está disponível para entrada antecipada.');
+        if ($type === RequestType::EarlyCheckIn && $status !== ReservationStatus::Confirmed) {
+            throw new DomainException('A entrada antecipada só pode ser pedida antes do check-in.');
         }
+        if ($hours === $stay->getCurrentHours($type)) {
+            throw new DomainException('Escolha um horário diferente do atual.');
+        }
+        $stay->assertHoursAllowed($type, $hours);
     }
 
-    private function applyApproval(ServiceRequest $request): void
+    private function assertPending(RequestStatus $status): void
     {
-        if ($request->type === RequestType::LateCheckout) {
-            $this->roomService->setLateCheckoutHours($request->reservationId, $request->extraHours);
-
-            return;
-        }
-        $roomId = $this->getReservation($request->reservationId)->roomId;
-        $isAlreadyReleased = $this->rooms->findById($roomId)?->status === RoomStatus::Released;
-        if (!$isAlreadyReleased) {
-            $this->roomService->releaseRoomToGuest($roomId);
-        }
-    }
-
-    private function getReservation(int $reservationId): Reservation
-    {
-        return $this->reservations->findById($reservationId) ?? throw new DomainException('Reserva não encontrada.');
-    }
-
-    private function getPendingRequest(int $requestId): ServiceRequest
-    {
-        $request = $this->requests->findById($requestId) ?? throw new DomainException('Solicitação não encontrada.');
-        if (!$request->isPending()) {
+        if ($status !== RequestStatus::Pending) {
             throw new DomainException('Esta solicitação já foi respondida.');
         }
-
-        return $request;
     }
 
     private function markResolved(int $requestId, RequestStatus $status): void

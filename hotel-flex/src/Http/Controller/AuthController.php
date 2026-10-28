@@ -4,42 +4,69 @@ declare(strict_types=1);
 
 namespace HotelFlex\Http\Controller;
 
-use HotelFlex\Domain\Role;
+use HotelFlex\Domain\DomainException;
+use HotelFlex\Http\Auth;
 use HotelFlex\Http\HttpRequest;
 use HotelFlex\Http\Navigation;
 use HotelFlex\Http\Response;
 use HotelFlex\Http\Session;
-use HotelFlex\Http\SessionUser;
-use HotelFlex\Service\HotelQueryService;
+use HotelFlex\Service\AuthService;
 use HotelFlex\View\View;
 
 final class AuthController
 {
     public function __construct(
         private readonly Session $session,
-        private readonly HotelQueryService $queries,
+        private readonly Auth $auth,
+        private readonly AuthService $authService,
+        private readonly ActionRunner $actions,
         private readonly View $view,
     ) {
     }
 
     public function showLogin(): void
     {
-        $user = $this->session->getUser();
-        if ($user) {
-            Response::redirect(Navigation::getHomePath($user->role));
-        }
-        $this->view->render('login', ['reservations' => $this->queries->getReservations()], 'base');
+        $this->redirectIfSignedIn();
+        $this->view->render('auth/login', ['pageTitle' => 'Entrar', 'old' => $this->session->pullOldInput()], 'base');
     }
 
     public function login(HttpRequest $request): never
     {
-        $role = Role::tryFrom($request->getBodyString('role'));
-        if ($role === null) {
-            $this->failLogin('Selecione um perfil válido.');
-        }
-        $reservationId = $role === Role::Guest ? $this->resolveGuestReservation($request) : null;
-        $this->session->signIn(new SessionUser($role, $reservationId));
-        Response::redirect(Navigation::getHomePath($role));
+        $this->actions->run(function () use ($request): string {
+            if ($this->session->isLoginLocked()) {
+                throw new DomainException('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+            }
+            try {
+                $user = $this->authService->authenticate($request->getBodyString('email'), (string) ($request->body['password'] ?? ''));
+            } catch (DomainException $error) {
+                $this->session->registerFailedLogin();
+                throw $error;
+            }
+            $this->session->signIn($user->id);
+
+            return Navigation::getHomePath($user->role);
+        }, 'Bem-vindo!', '/login', $request->body);
+    }
+
+    public function showRegister(): void
+    {
+        $this->redirectIfSignedIn();
+        $this->view->render('auth/register', ['pageTitle' => 'Criar conta', 'old' => $this->session->pullOldInput()], 'base');
+    }
+
+    public function register(HttpRequest $request): never
+    {
+        $this->actions->run(function () use ($request): string {
+            $user = $this->authService->registerGuest(
+                $request->getBodyString('name'),
+                $request->getBodyString('email'),
+                (string) ($request->body['password'] ?? ''),
+                (string) ($request->body['password_confirmation'] ?? ''),
+            );
+            $this->session->signIn($user->id);
+
+            return Navigation::getHomePath($user->role);
+        }, 'Conta criada! Agora você já pode reservar.', '/cadastro', $request->body);
     }
 
     public function logout(): never
@@ -48,20 +75,11 @@ final class AuthController
         Response::redirect('/login');
     }
 
-    private function resolveGuestReservation(HttpRequest $request): int
+    private function redirectIfSignedIn(): void
     {
-        $reservationId = filter_var($request->body['reservation_id'] ?? null, FILTER_VALIDATE_INT);
-        $reservation = is_int($reservationId) ? $this->queries->findReservation($reservationId) : null;
-        if ($reservation === null) {
-            $this->failLogin('Selecione uma reserva válida para entrar como hóspede.');
+        $user = $this->auth->user();
+        if ($user !== null) {
+            Response::redirect(Navigation::getHomePath($user->role));
         }
-
-        return $reservation->id;
-    }
-
-    private function failLogin(string $message): never
-    {
-        $this->session->flash('error', $message);
-        Response::redirect('/login');
     }
 }

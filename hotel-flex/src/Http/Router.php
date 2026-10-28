@@ -12,8 +12,10 @@ final class Router
     /** @var list<Route> */
     private array $routes = [];
 
-    public function __construct(private readonly Session $session)
-    {
+    public function __construct(
+        private readonly Session $session,
+        private readonly Auth $auth,
+    ) {
     }
 
     /** @param list<Role>|null $roles */
@@ -47,7 +49,7 @@ final class Router
 
     private function guard(Route $route, HttpRequest $request): void
     {
-        $user = $this->session->getUser();
+        $user = $this->auth->user();
         if (!$route->allows($user)) {
             Response::redirect($user ? Navigation::getHomePath($user->role) : '/login');
         }

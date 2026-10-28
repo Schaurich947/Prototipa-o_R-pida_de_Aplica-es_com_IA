@@ -1,7 +1,7 @@
 <?php
 /**
  * @var HotelFlex\View\View $view
- * @var HotelFlex\Http\SessionUser $currentUser
+ * @var HotelFlex\Domain\User $currentUser
  * @var string $content
  */
 ?>

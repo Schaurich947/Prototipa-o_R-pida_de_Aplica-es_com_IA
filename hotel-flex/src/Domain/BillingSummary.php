@@ -9,12 +9,18 @@ final readonly class BillingSummary
 {
     public function __construct(
         public int $baseCents,
-        public int $additionalCents,
+        public int $earlyCheckInCents,
+        public int $lateCheckoutCents,
     ) {
+    }
+
+    public function additionalCents(): int
+    {
+        return $this->earlyCheckInCents + $this->lateCheckoutCents;
     }
 
     public function totalCents(): int
     {
-        return $this->baseCents + $this->additionalCents;
+        return $this->baseCents + $this->additionalCents();
     }
 }

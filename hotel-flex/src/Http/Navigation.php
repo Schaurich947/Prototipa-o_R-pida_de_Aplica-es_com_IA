@@ -6,7 +6,7 @@ namespace HotelFlex\Http;
 
 use HotelFlex\Domain\Role;
 
-/** Single source for menu items and the roles allowed on each screen. */
+/** Single source for menu items and the roles allowed on each area. */
 final class Navigation
 {
     public const HOTEL_ROLES = [Role::Staff, Role::Admin];
@@ -14,10 +14,10 @@ final class Navigation
     public const SIGNED_IN_ROLES = [Role::Staff, Role::Guest, Role::Admin];
 
     private const ITEMS = [
-        ['path' => '/hotel/liberacao', 'label' => 'Liberação e horas', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
+        ['path' => '/hotel/liberacao', 'label' => 'Painel do dia', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
         ['path' => '/hotel/solicitacoes', 'label' => 'Solicitações', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
-        ['path' => '/hospede/reserva', 'label' => 'Minha reserva', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
-        ['path' => '/hospede/disponibilidade', 'label' => 'Disponibilidade', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
+        ['path' => '/hospede/reservas', 'label' => 'Minhas reservas', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
+        ['path' => '/hospede/nova-reserva', 'label' => 'Nova reserva', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
     ];
 
     /** @return array<string, list<array{path: string, label: string}>> items grouped by area */
@@ -38,5 +38,11 @@ final class Navigation
         $firstArea = array_values(self::getItemsByArea($role))[0] ?? [];
 
         return $firstArea[0]['path'] ?? '/login';
+    }
+
+    /** Menu items of the same area match sub-pages too (e.g. a reservation detail). */
+    public static function isActive(string $itemPath, string $currentPath): bool
+    {
+        return $currentPath === $itemPath || str_starts_with($currentPath, $itemPath . '/');
     }
 }

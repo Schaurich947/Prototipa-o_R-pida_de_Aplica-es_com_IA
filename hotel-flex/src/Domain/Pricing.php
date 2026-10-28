@@ -6,19 +6,23 @@ namespace HotelFlex\Domain;
 
 final class Pricing
 {
-    public static function calculateLateCheckoutFee(Room $room, int $hours): int
+    /** The hotel's tolerance hours are free; only the hours beyond it are charged. */
+    public static function calculateEarlyCheckInFee(Hotel $hotel, Room $room, int $hours): int
     {
-        Availability::assertValidLateCheckoutHours($room, $hours);
-
-        return $room->hourlyRateCents * $hours;
+        return max(0, $hours - $hotel->earlyFreeHours) * $room->hourlyRateCents;
     }
 
-    /** Hours were validated when saved, so building a summary never throws while rendering. */
-    public static function calculateBillingSummary(Room $room, Reservation $reservation): BillingSummary
+    public static function calculateLateCheckoutFee(Room $room, int $hours): int
+    {
+        return max(0, $hours) * $room->hourlyRateCents;
+    }
+
+    public static function calculateBillingSummary(Hotel $hotel, Room $room, Reservation $reservation): BillingSummary
     {
         return new BillingSummary(
             $room->dailyRateCents * $reservation->nights,
-            $room->hourlyRateCents * $reservation->lateCheckoutHours,
+            self::calculateEarlyCheckInFee($hotel, $room, $reservation->earlyCheckInHours),
+            self::calculateLateCheckoutFee($room, $reservation->lateCheckoutHours),
         );
     }
 }

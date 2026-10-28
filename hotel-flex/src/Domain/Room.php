@@ -10,12 +10,11 @@ final readonly class Room
 {
     public function __construct(
         public int $id,
+        public int $hotelId,
         public string $number,
         public string $category,
         public int $dailyRateCents,
         public int $hourlyRateCents,
-        /** Latest hour the room can stay with the guest (e.g. 15 when another booking arrives). */
-        public int $checkoutLimitHour,
         public RoomStatus $status,
         public ?DateTimeImmutable $cleanedAt,
     ) {
@@ -26,11 +25,11 @@ final readonly class Room
     {
         return new self(
             (int) $row['id'],
+            (int) $row['hotel_id'],
             (string) $row['number'],
             (string) $row['category'],
             (int) $row['daily_rate_cents'],
             (int) $row['hourly_rate_cents'],
-            (int) $row['checkout_limit_hour'],
             RoomStatus::from((string) $row['status']),
             $row['cleaned_at'] !== null ? new DateTimeImmutable((string) $row['cleaned_at']) : null,
         );

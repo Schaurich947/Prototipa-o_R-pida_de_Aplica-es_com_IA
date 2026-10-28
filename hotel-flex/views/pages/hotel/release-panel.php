@@ -1,46 +1,53 @@
 <?php
 
-use HotelFlex\Domain\HotelPolicy;
-use HotelFlex\Service\RoomFilter;
+use HotelFlex\Service\RoomPanelFilter;
 
 /**
  * @var HotelFlex\View\View $view
- * @var list<HotelFlex\Service\RoomView> $roomViews
- * @var list<HotelFlex\Service\RoomView> $allRoomViews
- * @var RoomFilter $activeFilter
+ * @var HotelFlex\Domain\Hotel $hotel
+ * @var list<HotelFlex\Domain\Hotel> $hotelOptions
+ * @var list<HotelFlex\Service\RoomCardView> $cards
+ * @var list<HotelFlex\Service\RoomCardView> $allCards
+ * @var RoomPanelFilter $activeFilter
+ * @var DateTimeImmutable $today
  */
-$additionalRevenue = array_sum(array_map(static fn ($roomView) => $roomView->billing?->additionalCents ?? 0, $allRoomViews));
 $stats = [
-    'Vagos antecipados' => (string) count(RoomFilter::Early->apply($allRoomViews)),
-    'Em limpeza' => (string) count(RoomFilter::Housekeeping->apply($allRoomViews)),
-    'Liberados' => (string) count(RoomFilter::Released->apply($allRoomViews)),
-    'Receita adicional' => formatMoney($additionalRevenue),
+    'Chegadas hoje' => (string) count(RoomPanelFilter::Arrivals->apply($allCards)),
+    'Vagos antecipados' => (string) count(RoomPanelFilter::Early->apply($allCards)),
+    'Em limpeza' => (string) count(RoomPanelFilter::Housekeeping->apply($allCards)),
+    'Receita adicional' => formatMoney(array_sum(array_map(static fn ($card) => $card->additionalRevenueCents(), $allCards))),
 ];
+$hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-picker', [
+    'action' => '/hotel/liberacao', 'name' => 'hotel', 'label' => 'Hotel',
+    'options' => toOptions($hotelOptions, static fn ($option) => $option->name),
+    'selectedId' => $hotel->id,
+]));
 ?>
 <?= $view->partial('page-header', [
-    'title' => 'Painel de Liberação e Horas Adicionais',
-    'description' => 'Check-in padrão às ' . formatHour(HotelPolicy::STANDARD_CHECK_IN_HOUR) . ' · check-out padrão às ' . formatHour(HotelPolicy::STANDARD_CHECK_OUT_HOUR),
+    'title' => "Painel do dia · {$hotel->name}",
+    'description' => formatDate($today) . ' · entrada padrão ' . formatHour($hotel->checkInHour) . ' · saída padrão ' . formatHour($hotel->checkOutHour),
+    'actions' => $hotelPicker,
 ]) ?>
 
-<section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Resumo dos quartos">
+<section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Resumo do dia">
     <?php foreach ($stats as $label => $value): ?>
         <?= $view->partial('stat-card', ['label' => $label, 'value' => $value]) ?>
     <?php endforeach; ?>
 </section>
 
-<nav class="tabs" aria-label="Filtrar quartos">
-    <?php foreach (RoomFilter::cases() as $filter): ?>
+<nav class="tabs flex-wrap" aria-label="Filtrar quartos">
+    <?php foreach (RoomPanelFilter::cases() as $filter): ?>
         <?php $isActive = $filter === $activeFilter; ?>
-        <a href="<?= e(url('/hotel/liberacao' . ($filter === RoomFilter::All ? '' : '?filtro=' . $filter->value))) ?>" class="tab <?= $isActive ? 'tab-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($filter->label()) ?></a>
+        <a href="<?= e(url('/hotel/liberacao' . ($filter === RoomPanelFilter::All ? '' : '?filtro=' . $filter->value))) ?>" class="tab <?= $isActive ? 'tab-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($filter->label()) ?></a>
     <?php endforeach; ?>
 </nav>
 
-<?php if ($roomViews === []): ?>
+<?php if ($cards === []): ?>
     <?= $view->partial('empty-state', ['message' => 'Nenhum quarto neste filtro.']) ?>
 <?php else: ?>
-    <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Quartos">
-        <?php foreach ($roomViews as $roomView): ?>
-            <?= $view->partial('room-card', ['roomView' => $roomView, 'activeFilter' => $activeFilter->value]) ?>
+    <section class="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Quartos">
+        <?php foreach ($cards as $card): ?>
+            <?= $view->partial('room-card', ['card' => $card, 'activeFilter' => $activeFilter->value]) ?>
         <?php endforeach; ?>
     </section>
 <?php endif; ?>

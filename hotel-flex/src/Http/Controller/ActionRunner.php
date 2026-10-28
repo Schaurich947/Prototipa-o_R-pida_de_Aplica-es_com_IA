@@ -18,14 +18,20 @@ final class ActionRunner
     {
     }
 
-    public function run(callable $action, string $successMessage, string $redirectTo): never
+    /**
+     * @param callable(): (string|null) $action may return a different redirect target on success
+     * @param array<string, mixed> $formInput kept for re-filling the form after an error
+     */
+    public function run(callable $action, string $successMessage, string $redirectTo, array $formInput = []): never
     {
         try {
-            $action();
+            $successRedirect = $action();
             $this->session->flash('success', $successMessage);
+            Response::redirect(is_string($successRedirect) ? $successRedirect : $redirectTo);
         } catch (DomainException $error) {
             $this->session->flash('error', $error->getMessage());
+            $this->session->flashOldInput($formInput);
+            Response::redirect($redirectTo);
         }
-        Response::redirect($redirectTo);
     }
 }

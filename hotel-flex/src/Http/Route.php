@@ -6,6 +6,7 @@ namespace HotelFlex\Http;
 
 use Closure;
 use HotelFlex\Domain\Role;
+use HotelFlex\Domain\User;
 
 final readonly class Route
 {
@@ -35,7 +36,7 @@ final readonly class Route
         return array_map('intval', $params);
     }
 
-    public function allows(?SessionUser $user): bool
+    public function allows(?User $user): bool
     {
         if ($this->allowedRoles === null) {
             return true;

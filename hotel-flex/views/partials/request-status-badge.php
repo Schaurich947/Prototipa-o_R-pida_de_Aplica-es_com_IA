@@ -7,6 +7,7 @@ $variantClass = match ($status) {
     RequestStatus::Pending => 'badge-outline',
     RequestStatus::Approved => 'badge-secondary',
     RequestStatus::Rejected => 'badge-destructive',
+    RequestStatus::Cancelled => 'badge-outline',
 };
 ?>
 <span class="badge <?= $variantClass ?>"><?= e($status->label()) ?></span>
