@@ -28,7 +28,7 @@ cp .env.example .env   # preencha usuário e senha do banco
 ```
 
 ```bash
-php bin/setup-database.php   # cria as tabelas e os dados de demonstração
+php bin/setup-database.php   # cria banco, usuário da aplicação, tabelas e dados de demonstração
 ```
 
 ```bash
@@ -53,15 +53,7 @@ O app descobre sozinho em qual pasta está, então `http://localhost/PROTO_IA_27
 2. Use os dois `.htaccess` do projeto (`hotel-flex/.htaccess` e `hotel-flex/public/.htaccess`) sem `RewriteBase`.
 3. O `composer install` é opcional para rodar o app: sem a pasta `vendor/`, ele usa o carregador próprio (`src/autoload.php`). O Composer só é necessário para rodar os testes.
 4. Crie o `.env` a partir do `.env.example`. No WAMP, o padrão é `DB_HOST=localhost`, `DB_ADMIN_USER=root` e `DB_ADMIN_PASSWORD=` vazio.
-5. Crie o banco `hotelflex` e o usuário da aplicação no phpMyAdmin (aba SQL):
-
-   ```sql
-   CREATE DATABASE hotelflex CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'hotelflex_app'@'localhost' IDENTIFIED BY 'troque_esta_senha';
-   GRANT SELECT, INSERT, UPDATE ON hotelflex.* TO 'hotelflex_app'@'localhost';
-   ```
-
-6. Crie as tabelas: rode `php bin/setup-database.php` ou importe `database/schema.sql` e depois `database/seed.sql` pelo phpMyAdmin.
+5. Com o MySQL ligado, rode `php bin/setup-database.php` dentro de `hotel-flex/`. Ele cria o banco, o usuário da aplicação (com a senha de `DB_PASSWORD`) e as tabelas com os dados de demonstração. Pode ser rodado de novo sem problema.
 
 Se aparecer "Algo deu errado", veja o log do Apache (no WAMP, ícone → Apache → Log de erros do Apache). A causa real fica registrada lá com o prefixo `[hotelflex]`.
 

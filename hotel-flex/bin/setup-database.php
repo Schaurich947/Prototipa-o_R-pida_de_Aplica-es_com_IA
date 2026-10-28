@@ -4,27 +4,28 @@ declare(strict_types=1);
 
 use HotelFlex\Config\Env;
 use HotelFlex\Database\ConnectionFactory;
+use HotelFlex\Database\DatabaseInstaller;
 
-$composerAutoload = dirname(__DIR__) . '/vendor/autoload.php';
-require is_file($composerAutoload) ? $composerAutoload : dirname(__DIR__) . '/src/autoload.php';
+$projectRoot = dirname(__DIR__);
+$composerAutoload = $projectRoot . '/vendor/autoload.php';
+require is_file($composerAutoload) ? $composerAutoload : $projectRoot . '/src/autoload.php';
 
 if (PHP_SAPI !== 'cli') {
     exit(1);
 }
 
-$projectRoot = dirname(__DIR__);
-$withSeed = !in_array('--no-seed', $argv, true);
+$envFile = $projectRoot . '/.env';
+if (!is_file($envFile)) {
+    fwrite(STDERR, "Arquivo .env não encontrado em {$projectRoot}. Copie o .env.example para .env e preencha.\n");
+    exit(1);
+}
 
 try {
-    $env = Env::load($projectRoot . '/.env');
+    $env = Env::load($envFile);
     date_default_timezone_set($env->get('APP_TIMEZONE', 'America/Sao_Paulo'));
-    $connection = ConnectionFactory::createAdminConnection($env);
-    $connection->exec((string) file_get_contents($projectRoot . '/database/schema.sql'));
-    echo "Tabelas criadas.\n";
-
-    if ($withSeed) {
-        $connection->exec((string) file_get_contents($projectRoot . '/database/seed.sql'));
-        echo "Dados de demonstração inseridos.\n";
+    $installer = new DatabaseInstaller(ConnectionFactory::createAdminConnection($env), $env, $projectRoot . '/database');
+    foreach ($installer->install(!in_array('--no-seed', $argv, true)) as $message) {
+        echo $message . "\n";
     }
 } catch (Throwable $error) {
     fwrite(STDERR, 'Falha ao preparar o banco: ' . $error->getMessage() . "\n");
