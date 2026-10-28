@@ -31,11 +31,11 @@ $request = $requestView->request;
     </div>
     <?php if ($canResolve && $request->isPending()): ?>
         <footer class="card-footer -mb-3 p-3">
-            <form method="post" action="/hotel/solicitacoes/<?= e($request->id) ?>/aprovar">
+            <form method="post" action="<?= e(url("/hotel/solicitacoes/{$request->id}/aprovar")) ?>">
                 <?= $view->partial('csrf-field') ?>
                 <button type="submit" class="btn btn-primary btn-sm">Aprovar</button>
             </form>
-            <form method="post" action="/hotel/solicitacoes/<?= e($request->id) ?>/recusar">
+            <form method="post" action="<?= e(url("/hotel/solicitacoes/{$request->id}/recusar")) ?>">
                 <?= $view->partial('csrf-field') ?>
                 <button type="submit" class="btn btn-ghost btn-sm">Recusar</button>
             </form>

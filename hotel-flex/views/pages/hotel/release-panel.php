@@ -31,7 +31,7 @@ $stats = [
 <nav class="tabs" aria-label="Filtrar quartos">
     <?php foreach (RoomFilter::cases() as $filter): ?>
         <?php $isActive = $filter === $activeFilter; ?>
-        <a href="/hotel/liberacao<?= $filter === RoomFilter::All ? '' : '?filtro=' . e($filter->value) ?>" class="tab <?= $isActive ? 'tab-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($filter->label()) ?></a>
+        <a href="<?= e(url('/hotel/liberacao' . ($filter === RoomFilter::All ? '' : '?filtro=' . $filter->value))) ?>" class="tab <?= $isActive ? 'tab-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($filter->label()) ?></a>
     <?php endforeach; ?>
 </nav>
 

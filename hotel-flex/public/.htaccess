@@ -1,0 +1,8 @@
+# hotel-flex/public/.htaccess
+# Arquivos reais (CSS/JS) são servidos direto; o resto vai para o front controller.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

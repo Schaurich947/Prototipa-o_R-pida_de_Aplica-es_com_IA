@@ -22,7 +22,8 @@ final readonly class HttpRequest
 
     public static function fromGlobals(): self
     {
-        $path = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
+        $browserPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
+        $path = Url::stripBasePath(rawurldecode($browserPath));
 
         return new self(strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')), rtrim($path, '/') ?: '/', $_GET, $_POST);
     }

@@ -8,7 +8,7 @@ final class Response
 {
     public static function redirect(string $location): never
     {
-        header('Location: ' . $location, true, 303);
+        header('Location: ' . Url::to($location), true, 303);
         exit;
     }
 

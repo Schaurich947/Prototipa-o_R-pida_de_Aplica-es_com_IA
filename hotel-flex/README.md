@@ -45,6 +45,26 @@ composer test
 npm install && npm run build:css
 ```
 
+### Rodando no WAMP / XAMPP (subpasta do `www`)
+
+O app descobre sozinho em qual pasta está, então `http://localhost/PROTO_IA_27.10/hotel-flex/` funciona sem editar nada.
+
+1. No WAMP, ative **Apache → Módulos Apache → rewrite_module**.
+2. Use os dois `.htaccess` do projeto (`hotel-flex/.htaccess` e `hotel-flex/public/.htaccess`) sem `RewriteBase`.
+3. Rode `composer install` dentro de `hotel-flex/`. Sem a pasta `vendor/`, a página dá erro 500.
+4. Crie o `.env` a partir do `.env.example`. No WAMP, o padrão é `DB_HOST=localhost`, `DB_ADMIN_USER=root` e `DB_ADMIN_PASSWORD=` vazio.
+5. Crie o banco `hotelflex` e o usuário da aplicação no phpMyAdmin (aba SQL):
+
+   ```sql
+   CREATE DATABASE hotelflex CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER 'hotelflex_app'@'localhost' IDENTIFIED BY 'troque_esta_senha';
+   GRANT SELECT, INSERT, UPDATE ON hotelflex.* TO 'hotelflex_app'@'localhost';
+   ```
+
+6. Crie as tabelas: rode `php bin/setup-database.php` ou importe `database/schema.sql` e depois `database/seed.sql` pelo phpMyAdmin.
+
+Se aparecer "Algo deu errado", veja o log do Apache (no WAMP, ícone → Apache → Log de erros do Apache). A causa real fica registrada lá com o prefixo `[hotelflex]`.
+
 O usuário do banco usado pela aplicação (`DB_USER`) precisa apenas de `SELECT`, `INSERT` e `UPDATE`.
 O `DB_ADMIN_USER` é usado só pelo script de setup.
 

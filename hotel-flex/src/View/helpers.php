@@ -3,11 +3,18 @@
 declare(strict_types=1);
 
 use HotelFlex\Domain\Availability;
+use HotelFlex\Http\Url;
 
 /** Escapes any dynamic value for HTML output (anti-XSS). */
 function e(mixed $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/** Builds an app URL that also works when the project lives in a subfolder. */
+function url(string $path): string
+{
+    return Url::to($path);
 }
 
 function formatMoney(int $cents): string

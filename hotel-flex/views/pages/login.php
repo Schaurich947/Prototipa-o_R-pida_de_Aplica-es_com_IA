@@ -16,7 +16,7 @@ $profiles = [
 </div>
 <div class="grid gap-4 md:grid-cols-3">
     <?php foreach ($profiles as $profile): ?>
-        <form method="post" action="/login" class="card">
+        <form method="post" action="<?= e(url('/login')) ?>" class="card">
             <?= $view->partial('csrf-field') ?>
             <input type="hidden" name="role" value="<?= e($profile['role']) ?>">
             <header class="card-header">

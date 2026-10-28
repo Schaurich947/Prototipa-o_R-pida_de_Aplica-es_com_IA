@@ -18,7 +18,7 @@ $action = match (true) {
 };
 ?>
 <?php if ($action !== null): ?>
-    <form method="post" action="/hotel/quartos/<?= e($room->id) ?>/<?= e($action['path']) ?>" class="w-full">
+    <form method="post" action="<?= e(url("/hotel/quartos/{$room->id}/{$action['path']}")) ?>" class="w-full">
         <?= $view->partial('csrf-field') ?>
         <input type="hidden" name="filtro" value="<?= e($activeFilter) ?>">
         <button type="submit" class="btn btn-block <?= e($action['class']) ?>"><?= e($action['label']) ?></button>

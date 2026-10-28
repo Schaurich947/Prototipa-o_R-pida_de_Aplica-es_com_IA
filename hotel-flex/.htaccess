@@ -1,0 +1,7 @@
+# hotel-flex/.htaccess
+# Envia tudo para a pasta public/. Assim .env, src/ e vendor/ nunca ficam acessíveis pelo navegador.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^$ public/ [L]
+    RewriteRule ^((?!public/).*)$ public/$1 [L]
+</IfModule>

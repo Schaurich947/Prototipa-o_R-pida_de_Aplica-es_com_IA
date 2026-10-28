@@ -13,13 +13,13 @@ $showAreaLabels = count($navigationGroups) > 1;
 <header class="border-b">
     <div class="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3">
         <div class="flex items-center justify-between gap-3">
-            <a href="<?= e(Navigation::getHomePath($currentUser->role)) ?>" class="flex items-center gap-2 font-semibold">
+            <a href="<?= e(url(Navigation::getHomePath($currentUser->role))) ?>" class="flex items-center gap-2 font-semibold">
                 <?= $view->partial('icon-bed') ?>
                 HotelFlex
             </a>
             <div class="flex items-center gap-2">
                 <span class="badge badge-outline"><?= e($currentUser->role->label()) ?></span>
-                <form method="post" action="/logout">
+                <form method="post" action="<?= e(url('/logout')) ?>">
                     <?= $view->partial('csrf-field') ?>
                     <button type="submit" class="btn btn-ghost btn-sm">Sair</button>
                 </form>
@@ -33,7 +33,7 @@ $showAreaLabels = count($navigationGroups) > 1;
                     <?php endif; ?>
                     <?php foreach ($items as $item): ?>
                         <?php $isActive = $item['path'] === $currentPath; ?>
-                        <a href="<?= e($item['path']) ?>" class="nav-link <?= $isActive ? 'nav-link-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($item['label']) ?></a>
+                        <a href="<?= e(url($item['path'])) ?>" class="nav-link <?= $isActive ? 'nav-link-active' : '' ?>" <?= $isActive ? 'aria-current="page"' : '' ?>><?= e($item['label']) ?></a>
                     <?php endforeach; ?>
                 </div>
             <?php endforeach; ?>

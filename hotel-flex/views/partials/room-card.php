@@ -24,7 +24,7 @@ $actionHtml = $view->partial('housekeeping-action', ['roomView' => $roomView, 'a
                 <span class="font-medium"><?= e($reservation->guestName) ?></span>
                 <span class="text-muted-foreground">· check-in <?= e(formatDate($reservation->checkInDate)) ?></span>
             </p>
-            <form method="post" action="/hotel/reservas/<?= e($reservation->id) ?>/late-checkout" class="space-y-3" data-late-checkout-form>
+            <form method="post" action="<?= e(url("/hotel/reservas/{$reservation->id}/late-checkout")) ?>" class="space-y-3" data-late-checkout-form>
                 <?= $view->partial('csrf-field') ?>
                 <input type="hidden" name="filtro" value="<?= e($activeFilter) ?>">
                 <?= $view->partial('late-checkout-selector', [

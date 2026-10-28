@@ -31,7 +31,7 @@ $statusMessage = match (true) {
     </div>
     <?php if ($roomView->isEarlyVacant): ?>
         <footer class="card-footer">
-            <form method="post" action="/hospede/solicitacoes" class="w-full">
+            <form method="post" action="<?= e(url('/hospede/solicitacoes')) ?>" class="w-full">
                 <?= $view->partial('guest-request-fields', ['type' => RequestType::EarlyCheckIn->value, 'reservationId' => $roomView->reservation->id, 'isAdmin' => $isAdmin]) ?>
                 <button type="submit" class="btn btn-success btn-block" <?= $hasPendingRequest ? 'disabled' : '' ?>>
                     <?= $hasPendingRequest ? 'Solicitação enviada · aguardando recepção' : 'Solicitar entrada antecipada' ?>

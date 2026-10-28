@@ -17,6 +17,7 @@ use HotelFlex\Http\HttpRequest;
 use HotelFlex\Http\Response;
 use HotelFlex\Http\Router;
 use HotelFlex\Http\Session;
+use HotelFlex\Http\Url;
 use HotelFlex\Repository\ChangeTrackerRepository;
 use HotelFlex\Repository\ReservationRepository;
 use HotelFlex\Repository\RoomRepository;
@@ -33,6 +34,7 @@ final class App
     {
         $env = Env::load($projectRoot . '/.env');
         date_default_timezone_set($env->get('APP_TIMEZONE', 'America/Sao_Paulo'));
+        Url::setBasePath(Url::detectBasePath($_SERVER));
         $view = new View($projectRoot . '/views');
         ErrorHandler::register($view, $env->getBool('APP_DEBUG'));
 

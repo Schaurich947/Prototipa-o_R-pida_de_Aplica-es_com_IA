@@ -5,5 +5,5 @@
     <?php if (!empty($debugMessage)): ?>
         <p class="alert alert-error"><?= e($debugMessage) ?></p>
     <?php endif; ?>
-    <a class="btn btn-outline" href="/login">Voltar ao início</a>
+    <a class="btn btn-outline" href="<?= e(url('/login')) ?>">Voltar ao início</a>
 </div>

@@ -23,7 +23,7 @@ $availabilityText = $maxHours === 0
         </div>
     </header>
     <?php if ($maxHours > 0): ?>
-        <form method="post" action="/hospede/solicitacoes" class="contents">
+        <form method="post" action="<?= e(url('/hospede/solicitacoes')) ?>" class="contents">
             <div class="card-content">
                 <?= $view->partial('guest-request-fields', ['type' => RequestType::LateCheckout->value, 'reservationId' => $roomView->reservation->id, 'isAdmin' => $isAdmin]) ?>
                 <?= $view->partial('late-checkout-selector', [

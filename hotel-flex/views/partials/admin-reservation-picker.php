@@ -8,7 +8,7 @@
  * @var string $action
  */
 ?>
-<form method="get" action="<?= e($action) ?>" class="flex flex-col gap-2" data-auto-submit>
+<form method="get" action="<?= e(url($action)) ?>" class="flex flex-col gap-2" data-auto-submit>
     <label class="label" for="admin-reservation">Visualizar como hóspede</label>
     <div class="flex gap-2">
         <select class="select" id="admin-reservation" name="reserva">
