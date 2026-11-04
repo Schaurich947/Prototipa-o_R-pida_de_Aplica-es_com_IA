@@ -1,0 +1,33 @@
+{
+    "name": "comprova/app",
+    "description": "Envio automatizado de comprovantes de pagamento por e-mail e WhatsApp.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "ext-pdo": "*",
+        "ext-curl": "*",
+        "ext-fileinfo": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Comprova\\": "src/"
+        },
+        "files": [
+            "src/View/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Comprova\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "serve": "php -S localhost:8000 -t public public/index.php"
+    }
+}

@@ -1,0 +1,49 @@
+/* public/assets/css/layout.css — sidebar, topbar and page structure */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh; }
+.sidebar { display: flex; flex-direction: column; padding: 28px 18px 20px; background: var(--white); border-right: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; color: var(--ink); font-size: 20px; font-weight: 750; letter-spacing: -.7px; text-decoration: none; }
+.brand-mark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 11px; background: var(--green); color: white; }
+.brand-mark svg { width: 19px; height: 19px; }
+.nav-label { margin: 40px 12px 12px; color: #8c958f; font-size: 10px; font-weight: 700; letter-spacing: 1.15px; text-transform: uppercase; }
+.nav { display: grid; gap: 5px; }
+.nav a { display: flex; align-items: center; gap: 12px; min-height: 43px; padding: 0 12px; border-radius: 9px; color: #5f6b64; font-size: 13px; font-weight: 550; text-decoration: none; }
+.nav a:hover { background: #f3f6f4; }
+.nav a.active { background: var(--green-soft); color: var(--green-dark); font-weight: 650; }
+.nav svg { width: 18px; height: 18px; flex: none; }
+.nav .count { margin-left: auto; padding: 1px 7px; border-radius: 10px; background: var(--red-soft); color: var(--red); font-size: 11px; font-weight: 650; }
+.sidebar-bottom { margin-top: auto; }
+.profile { display: flex; align-items: center; gap: 10px; padding: 16px 9px 0; border-top: 1px solid var(--line); }
+.avatar { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 50%; background: #e8eee9; color: #476253; font-size: 11px; font-weight: 700; }
+.profile-name { font-size: 12px; font-weight: 650; }
+.profile-role { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.profile form { margin-left: auto; }
+
+main { min-width: 0; padding: 30px clamp(22px, 4vw, 58px) 48px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; max-width: 1240px; margin: 0 auto 30px; color: var(--muted); font-size: 12px; }
+.breadcrumb span { margin: 0 7px; color: #b6beb9; }
+.content { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; max-width: 1240px; margin: 0 auto; }
+.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+.eyebrow { margin-bottom: 8px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: 1.2px; text-transform: uppercase; }
+.subtitle { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.lower-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(250px, .8fr); gap: 18px; }
+.auth-page { display: grid; min-height: 100vh; place-items: center; padding: 24px 16px; }
+.auth-card { width: min(100%, 400px); }
+
+@media (max-width: 980px) {
+    .app { grid-template-columns: 205px minmax(0, 1fr); }
+    .lower-grid { grid-template-columns: 1fr; }
+}
+
+/* Small screens: the menu wraps and every item stays visible (the prototype hid inactive ones). */
+@media (max-width: 680px) {
+    .app { display: block; }
+    .sidebar { padding: 14px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .brand { padding: 0; }
+    .nav-label { display: none; }
+    .nav { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 14px; }
+    .nav a { min-height: 35px; padding: 0 10px; font-size: 12px; }
+    .sidebar-bottom { margin-top: 12px; }
+    .profile { padding-top: 12px; }
+    main { padding: 21px 16px 35px; }
+    .page-heading { align-items: stretch; flex-direction: column; }
+}
