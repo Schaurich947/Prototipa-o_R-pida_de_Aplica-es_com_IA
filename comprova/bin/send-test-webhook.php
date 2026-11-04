@@ -21,8 +21,14 @@ if (PHP_SAPI !== 'cli' || !isset($argv[1]) || str_starts_with($argv[1], '--')) {
     exit(1);
 }
 
-$options = getopt('', ['email:', 'celular:', 'nome:', 'valor:', 'id:']);
-$option = static fn (string $key, string $default): string => is_string($options[$key] ?? null) ? $options[$key] : $default;
+// getopt() stops at the first positional argument (the URL), so options are read by hand.
+$options = [];
+foreach (array_slice($argv, 2) as $argument) {
+    if (preg_match('/^--(\w+)=(.*)$/s', $argument, $match)) {
+        $options[$match[1]] = $match[2];
+    }
+}
+$option = static fn (string $key, string $default): string => $options[$key] ?? $default;
 $env = Env::load($projectRoot . '/.env');
 $payload = [
     'external_id' => $option('id', 'TESTE-' . date('YmdHis')),
