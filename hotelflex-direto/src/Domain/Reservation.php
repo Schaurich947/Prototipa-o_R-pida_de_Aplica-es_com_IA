@@ -18,6 +18,8 @@ final readonly class Reservation
         public int $earlyCheckInHours,
         public int $lateCheckoutHours,
         public ReservationStatus $status,
+        public ?PaymentPlan $paymentPlan = null,
+        public int $discountPercent = 0,
     ) {
     }
 
@@ -34,6 +36,8 @@ final readonly class Reservation
             (int) $row['early_check_in_hours'],
             (int) $row['late_checkout_hours'],
             ReservationStatus::from((string) $row['status']),
+            ($row['payment_plan'] ?? null) !== null ? PaymentPlan::from((string) $row['payment_plan']) : null,
+            (int) ($row['discount_percent'] ?? 0),
         );
     }
 

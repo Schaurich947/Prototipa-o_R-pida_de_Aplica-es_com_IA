@@ -75,4 +75,31 @@ final class BookingRulesTest extends TestCase
         $this->assertContains(PaymentMethod::Cash, PaymentMethod::deskMethods());
         $this->assertContains(PaymentMethod::CreditCard, PaymentMethod::deskMethods());
     }
+
+    public function testPayingEarlierGivesABiggerDiscount(): void
+    {
+        $this->assertSame(5, PaymentPlan::Full->discountPercent());
+        $this->assertSame(2, PaymentPlan::Deposit->discountPercent());
+        $this->assertSame(0, PaymentPlan::DepositPlusDesk->discountPercent());
+        $this->assertSame(3200, PaymentPlan::calculateDiscount(64000, 5));
+    }
+
+    public function testTwoStepPixRestIsDueADayBeforeCheckIn(): void
+    {
+        $checkInAt = new DateTimeImmutable('2026-11-13 15:00');
+
+        $this->assertSame('2026-11-12 15:00', PaymentPlan::Deposit->getRestDueAt($checkInAt)?->format('Y-m-d H:i'));
+        $this->assertSame('2026-11-13 15:00', PaymentPlan::DepositPlusDesk->getRestDueAt($checkInAt)?->format('Y-m-d H:i'));
+        $this->assertNull(PaymentPlan::Full->getRestDueAt($checkInAt));
+    }
+
+    public function testTwoStepPixIsUnavailableWhenCheckInIsTooClose(): void
+    {
+        $checkInAt = new DateTimeImmutable('2026-11-11 14:00');
+        $firstDueAt = new DateTimeImmutable('2026-11-11 08:00');
+
+        $this->assertFalse(PaymentPlan::Deposit->isAvailable($firstDueAt, $checkInAt));
+        $this->assertTrue(PaymentPlan::Full->isAvailable($firstDueAt, $checkInAt));
+        $this->assertTrue(PaymentPlan::DepositPlusDesk->isAvailable($firstDueAt, $checkInAt));
+    }
 }

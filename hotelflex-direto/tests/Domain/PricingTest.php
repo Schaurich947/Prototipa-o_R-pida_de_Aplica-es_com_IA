@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace HotelFlex\Tests\Domain;
 
+use DateTimeImmutable;
+use HotelFlex\Domain\PaymentPlan;
 use HotelFlex\Domain\Pricing;
+use HotelFlex\Domain\Reservation;
+use HotelFlex\Domain\ReservationStatus;
 use PHPUnit\Framework\TestCase;
 
 final class PricingTest extends TestCase
@@ -33,5 +37,14 @@ final class PricingTest extends TestCase
         $this->assertSame(5000, $billing->earlyCheckInCents);
         $this->assertSame(15000, $billing->lateCheckoutCents);
         $this->assertSame(84000, $billing->totalCents());
+    }
+
+    public function testDiscountAppliesToTheNightsOnlyNotToExtraHours(): void
+    {
+        $reservation = new Reservation(1, 'HF-1', 10, 1, new DateTimeImmutable('2026-10-27'), 2, 0, 3, ReservationStatus::Confirmed, PaymentPlan::Full, 5);
+        $billing = Pricing::calculateBillingSummary(DomainFactory::hotel(), DomainFactory::room(), $reservation);
+
+        $this->assertSame(3200, $billing->discountCents);
+        $this->assertSame(64000 - 3200 + 15000, $billing->totalCents());
     }
 }

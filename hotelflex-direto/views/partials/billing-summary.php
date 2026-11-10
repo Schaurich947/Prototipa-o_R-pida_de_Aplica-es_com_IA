@@ -7,12 +7,13 @@
  */
 $lines = [
     ['label' => "Diárias ({$nights}×)", 'cents' => $billing->baseCents, 'key' => 'base'],
+    ...($billing->discountCents > 0 ? [['label' => "Desconto ({$billing->discountPercent}% pela forma de pagamento)", 'cents' => -$billing->discountCents, 'key' => 'discount']] : []),
     ['label' => 'Entrada antecipada', 'cents' => $billing->earlyCheckInCents, 'key' => 'early'],
     ['label' => 'Saída tardia', 'cents' => $billing->lateCheckoutCents, 'key' => 'late'],
 ];
 ?>
 <dl class="space-y-1.5 rounded-lg bg-muted/50 p-3 text-sm" data-billing
-    data-base-cents="<?= e($billing->baseCents) ?>" data-early-cents="<?= e($billing->earlyCheckInCents) ?>" data-late-cents="<?= e($billing->lateCheckoutCents) ?>">
+    data-base-cents="<?= e($billing->baseCents - $billing->discountCents) ?>" data-early-cents="<?= e($billing->earlyCheckInCents) ?>" data-late-cents="<?= e($billing->lateCheckoutCents) ?>">
     <?php foreach ($lines as $line): ?>
         <div class="flex justify-between text-muted-foreground">
             <dt><?= e($line['label']) ?></dt>

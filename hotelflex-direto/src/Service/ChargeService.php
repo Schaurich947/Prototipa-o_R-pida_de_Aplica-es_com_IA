@@ -50,7 +50,11 @@ final class ChargeService
         $descriptions = $plan === PaymentPlan::Full
             ? ['Diárias da reserva']
             : ['Sinal de ' . PaymentPlan::DEPOSIT_PERCENT . '% das diárias', $plan->isRestPaidAtDesk() ? 'Restante das diárias (pagar no hotel)' : 'Restante das diárias'];
-        $dueDates = [$now->modify("+{$stay->hotel->paymentDeadlineHours} hours"), $stay->startsAt()];
+        $firstDueAt = $now->modify("+{$stay->hotel->paymentDeadlineHours} hours");
+        if (!$plan->isAvailable($firstDueAt, $stay->startsAt())) {
+            throw new DomainException('Esta forma de pagamento não está disponível para uma entrada tão próxima. Escolha outra.');
+        }
+        $dueDates = [$firstDueAt, $plan->getRestDueAt($stay->startsAt())];
 
         $charges = [];
         foreach ($parts as $index => $amountCents) {

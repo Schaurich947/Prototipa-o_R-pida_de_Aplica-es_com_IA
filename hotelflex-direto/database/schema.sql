@@ -62,6 +62,9 @@ CREATE TABLE reservations (
     early_check_in_hours TINYINT UNSIGNED NOT NULL DEFAULT 0,
     late_checkout_hours TINYINT UNSIGNED NOT NULL DEFAULT 0,
     status ENUM('pending_payment', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'expired') NOT NULL DEFAULT 'pending_payment',
+    -- Forma de pagamento escolhida e o desconto que ela dá nas diárias.
+    payment_plan ENUM('integral', 'sinal', 'sinal-balcao') NULL,
+    discount_percent TINYINT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (id),

@@ -19,10 +19,14 @@ final class Pricing
 
     public static function calculateBillingSummary(Hotel $hotel, Room $room, Reservation $reservation): BillingSummary
     {
+        $baseCents = $room->dailyRateCents * $reservation->nights;
+
         return new BillingSummary(
-            $room->dailyRateCents * $reservation->nights,
+            $baseCents,
             self::calculateEarlyCheckInFee($hotel, $room, $reservation->earlyCheckInHours),
             self::calculateLateCheckoutFee($room, $reservation->lateCheckoutHours),
+            PaymentPlan::calculateDiscount($baseCents, $reservation->discountPercent),
+            $reservation->discountPercent,
         );
     }
 }

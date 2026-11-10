@@ -48,7 +48,7 @@ final class ReservationService
         return $this->transaction->run(function () use ($guest, $room, $dates, $plan): int {
             $this->rooms->lockForUpdate($room->id);
             $this->assertRoomIsFree($room, $dates, null);
-            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $dates->checkInDate, $dates->nights);
+            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $dates->checkInDate, $dates->nights, $plan);
             $stay = $this->stays->build($this->reservations->findById($reservationId) ?? throw new DomainException('Reserva não encontrada.'));
             $charges = $this->charges->createBookingCharges($stay, $plan);
             $this->notifier->notifyGuest($stay, ReservationMessages::created($stay, $charges));

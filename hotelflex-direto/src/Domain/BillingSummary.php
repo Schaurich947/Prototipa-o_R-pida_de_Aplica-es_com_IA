@@ -11,6 +11,9 @@ final readonly class BillingSummary
         public int $baseCents,
         public int $earlyCheckInCents,
         public int $lateCheckoutCents,
+        /** Discount on the nights for paying earlier (see PaymentPlan). */
+        public int $discountCents = 0,
+        public int $discountPercent = 0,
     ) {
     }
 
@@ -21,6 +24,6 @@ final readonly class BillingSummary
 
     public function totalCents(): int
     {
-        return $this->baseCents + $this->additionalCents();
+        return $this->baseCents - $this->discountCents + $this->additionalCents();
     }
 }

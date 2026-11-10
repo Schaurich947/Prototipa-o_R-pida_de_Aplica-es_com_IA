@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotelFlex\Repository;
 
 use DateTimeImmutable;
+use HotelFlex\Domain\PaymentPlan;
 use HotelFlex\Domain\Reservation;
 use HotelFlex\Domain\ReservationStatus;
 use PDO;
@@ -69,12 +70,21 @@ final class ReservationRepository
         );
     }
 
-    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights): int
+    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights, PaymentPlan $plan): int
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO reservations (code, user_id, room_id, check_in_date, nights) VALUES (:code, :user_id, :room_id, :check_in_date, :nights)',
+            'INSERT INTO reservations (code, user_id, room_id, check_in_date, nights, payment_plan, discount_percent)
+             VALUES (:code, :user_id, :room_id, :check_in_date, :nights, :payment_plan, :discount_percent)',
         );
-        $statement->execute(['code' => $code, 'user_id' => $userId, 'room_id' => $roomId, 'check_in_date' => $checkInDate->format('Y-m-d'), 'nights' => $nights]);
+        $statement->execute([
+            'code' => $code,
+            'user_id' => $userId,
+            'room_id' => $roomId,
+            'check_in_date' => $checkInDate->format('Y-m-d'),
+            'nights' => $nights,
+            'payment_plan' => $plan->value,
+            'discount_percent' => $plan->discountPercent(),
+        ]);
 
         return (int) $this->connection->lastInsertId();
     }
