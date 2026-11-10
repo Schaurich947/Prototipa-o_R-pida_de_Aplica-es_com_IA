@@ -12,6 +12,7 @@ use HotelFlex\Domain\ChargeStatus;
 use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\Reservation;
+use HotelFlex\Domain\PaymentMethod;
 use HotelFlex\Domain\PaymentPlan;
 use HotelFlex\Domain\ReservationStatus;
 use HotelFlex\Domain\Role;
@@ -46,12 +47,15 @@ final class ChargeService
     {
         $now = $this->clock->now();
         $parts = $plan->splitAmount($stay->billing->totalCents());
-        $descriptions = $plan === PaymentPlan::Full ? ['Diárias da reserva'] : ['Sinal de ' . PaymentPlan::DEPOSIT_PERCENT . '% das diárias', 'Restante das diárias'];
+        $descriptions = $plan === PaymentPlan::Full
+            ? ['Diárias da reserva']
+            : ['Sinal de ' . PaymentPlan::DEPOSIT_PERCENT . '% das diárias', $plan->isRestPaidAtDesk() ? 'Restante das diárias (pagar no hotel)' : 'Restante das diárias'];
         $dueDates = [$now->modify("+{$stay->hotel->paymentDeadlineHours} hours"), $stay->startsAt()];
 
         $charges = [];
         foreach ($parts as $index => $amountCents) {
-            $chargeId = $this->charges->create($stay->reservation->id, ChargeKind::Booking, $descriptions[$index], $amountCents, ChargeStatus::Pending, $dueDates[$index], $now);
+            $payAtDesk = $index === 1 && $plan->isRestPaidAtDesk();
+            $chargeId = $this->charges->create($stay->reservation->id, ChargeKind::Booking, $descriptions[$index], $amountCents, ChargeStatus::Pending, $dueDates[$index], $now, $payAtDesk);
             $charges[] = $this->charges->findById($chargeId) ?? throw new DomainException('Cobrança não encontrada.');
         }
 
@@ -95,6 +99,27 @@ final class ChargeService
             $this->notifier->notifyGuest($stay, $isApproved
                 ? ReservationMessages::paymentApproved($stay, $charge, $isConfirming)
                 : ReservationMessages::paymentRejected($stay, $charge, $reason));
+        });
+    }
+
+    /** The reception takes the payment in person; paying the booking this way also confirms the reservation. */
+    public function receiveAtDesk(User $actor, int $chargeId, PaymentMethod $method): void
+    {
+        $charge = $this->charges->findById($chargeId) ?? throw new DomainException('Cobrança não encontrada.');
+        $reservation = $this->guard->getManagedReservation($actor, $charge->reservationId);
+        if (!in_array($method, PaymentMethod::deskMethods(), true)) {
+            throw new DomainException('Escolha como o pagamento foi recebido no balcão.');
+        }
+        $this->transaction->run(function () use ($actor, $charge, $reservation, $method): void {
+            if (!$this->charges->markPaidAtDesk($charge->id, $method, $actor->id, $this->clock->now())) {
+                throw new DomainException('Esta cobrança já foi paga ou não está mais em aberto.');
+            }
+            $isConfirming = $charge->kind === ChargeKind::Booking && $reservation->status === ReservationStatus::PendingPayment;
+            if ($isConfirming) {
+                $this->reservations->updateStatus($reservation->id, ReservationStatus::PendingPayment, ReservationStatus::Confirmed);
+            }
+            $stay = $this->stays->build($this->reservations->findById($reservation->id) ?? $reservation);
+            $this->notifier->notifyGuest($stay, ReservationMessages::paymentReceivedAtDesk($stay, $charge, $method, $isConfirming));
         });
     }
 

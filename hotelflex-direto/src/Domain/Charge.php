@@ -21,6 +21,8 @@ final readonly class Charge
         public ?string $receiptMime,
         public ?string $rejectionReason,
         public DateTimeImmutable $createdAt,
+        public bool $payAtDesk = false,
+        public ?PaymentMethod $paidMethod = null,
     ) {
     }
 
@@ -42,11 +44,19 @@ final readonly class Charge
             $optionalString('receipt_mime'),
             $optionalString('rejection_reason'),
             new DateTimeImmutable((string) $row['created_at']),
+            (bool) ($row['pay_at_desk'] ?? false),
+            ($row['paid_method'] ?? null) !== null ? PaymentMethod::from((string) $row['paid_method']) : null,
         );
     }
 
     /** The guest can (re)send a receipt while the charge waits for payment. */
     public function acceptsReceipt(): bool
+    {
+        return $this->status === ChargeStatus::Pending && $this->kind !== ChargeKind::Refund && !$this->payAtDesk;
+    }
+
+    /** Open charges can always be settled in person, whatever was agreed. */
+    public function canBeReceivedAtDesk(): bool
     {
         return $this->status === ChargeStatus::Pending && $this->kind !== ChargeKind::Refund;
     }

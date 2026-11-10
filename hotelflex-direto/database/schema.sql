@@ -96,6 +96,10 @@ CREATE TABLE charges (
     receipt_original_name VARCHAR(160) NULL,
     receipt_mime VARCHAR(40) NULL,
     rejection_reason VARCHAR(255) NULL,
+    -- Cobranças combinadas para pagar no hotel não pedem comprovante; a recepção registra o recebimento.
+    pay_at_desk TINYINT(1) NOT NULL DEFAULT 0,
+    paid_method ENUM('pix_receipt', 'cash', 'debit_card', 'credit_card', 'pix_desk') NULL,
+    received_by INT UNSIGNED NULL,
     created_at DATETIME NOT NULL,
     reviewed_at DATETIME NULL,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),

@@ -24,10 +24,13 @@ $canUpload = $charge->acceptsReceipt() && $stay->reservation->status->isActive()
             <p class="font-medium"><?= e($charge->description) ?></p>
             <p class="text-sm text-muted-foreground"><?= e($charge->kind->label()) ?> · <?= e(formatMoney($charge->amountCents)) ?></p>
         </div>
-        <span class="badge <?= $badgeClass ?>"><?= e($charge->status->label()) ?></span>
+        <span class="badge <?= $badgeClass ?>"><?= e($charge->status->label()) ?><?= $charge->paidMethod !== null ? ' · ' . e($charge->paidMethod->label()) : '' ?></span>
     </div>
     <?php if ($charge->rejectionReason !== null && $charge->status === ChargeStatus::Pending): ?>
         <p class="alert alert-error">Comprovante anterior recusado: <?= e($charge->rejectionReason) ?></p>
+    <?php endif; ?>
+    <?php if ($charge->payAtDesk && $charge->status === ChargeStatus::Pending): ?>
+        <p class="rounded-lg bg-muted/50 p-3 text-sm">Pague no hotel até o check-in: <strong>dinheiro, cartão ou Pix no balcão</strong>. A recepção registra o recebimento e você recebe a confirmação.</p>
     <?php endif; ?>
     <?php if ($canUpload): ?>
         <div class="rounded-lg bg-muted/50 p-3 text-sm">

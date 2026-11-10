@@ -4,6 +4,7 @@
  * @var HotelFlex\Domain\Hotel $hotel
  * @var list<HotelFlex\Domain\Hotel> $hotelOptions
  * @var list<array{charge: HotelFlex\Domain\Charge, stay: HotelFlex\Service\StayView}> $items
+ * @var list<array{charge: HotelFlex\Domain\Charge, stay: HotelFlex\Service\StayView}> $openItems
  */
 $hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-picker', [
     'action' => '/hotel/pagamentos', 'name' => 'hotel', 'label' => 'Hotel',
@@ -17,6 +18,7 @@ $hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-pi
     'actions' => $hotelPicker,
 ]) ?>
 
+<h2 class="text-base font-semibold">Comprovantes Pix para conferir (<?= e(count($items)) ?>)</h2>
 <?php if ($items === []): ?>
     <?= $view->partial('empty-state', ['message' => 'Nenhum comprovante aguardando conferência.']) ?>
 <?php else: ?>
@@ -53,3 +55,17 @@ $hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-pi
         <?php endforeach; ?>
     </div>
 <?php endif; ?>
+
+<section class="space-y-3">
+    <h2 class="text-base font-semibold">Em aberto · receber no balcão (<?= e(count($openItems)) ?>)</h2>
+    <p class="text-sm text-muted-foreground">Dinheiro, cartão na maquininha do hotel ou Pix no balcão. O sistema não guarda dados de cartão.</p>
+    <?php if ($openItems === []): ?>
+        <?= $view->partial('empty-state', ['message' => 'Nenhum valor em aberto.']) ?>
+    <?php else: ?>
+        <div class="grid gap-4 md:grid-cols-2">
+            <?php foreach ($openItems as ['charge' => $charge, 'stay' => $stay]): ?>
+                <?= $view->partial('desk-receipt-card', ['charge' => $charge, 'stay' => $stay]) ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</section>

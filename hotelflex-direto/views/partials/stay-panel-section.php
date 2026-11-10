@@ -25,6 +25,8 @@ $canCheckIn = $isArrival && !$isAwaitingPayment && $card->inHouse === null && in
             <p class="font-medium"><?= e($reservation->code) ?></p>
             <?php if ($isAwaitingPayment): ?>
                 <a class="badge badge-warning" href="<?= e(url('/hotel/pagamentos')) ?>">Aguardando pagamento</a>
+            <?php elseif ($stay->openBalanceCents > 0): ?>
+                <a class="badge badge-warning" href="<?= e(url('/hotel/pagamentos')) ?>">Saldo em aberto: <?= e(formatMoney($stay->openBalanceCents)) ?></a>
             <?php endif; ?>
         </div>
         <p class="text-right text-xs text-muted-foreground">

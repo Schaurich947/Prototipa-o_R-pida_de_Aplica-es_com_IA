@@ -45,6 +45,7 @@ final class Routes
         $router->post('/hotel/cobrancas/{id}/aprovar', $payments('approve'), $hotelRoles);
         $router->post('/hotel/cobrancas/{id}/recusar', $payments('reject'), $hotelRoles);
         $router->post('/hotel/cobrancas/{id}/devolvido', $payments('markRefunded'), $hotelRoles);
+        $router->post('/hotel/cobrancas/{id}/receber', $payments('receiveAtDesk'), $hotelRoles);
         $router->post('/hospede/cobrancas/{id}/comprovante', $payments('submitReceipt'), $guestRoles);
         $router->get('/cobrancas/{id}/arquivo', $payments('downloadReceipt'), Navigation::SIGNED_IN_ROLES);
         $router->get('/perfil', $profile('show'), Navigation::SIGNED_IN_ROLES);

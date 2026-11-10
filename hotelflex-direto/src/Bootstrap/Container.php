@@ -79,7 +79,7 @@ final class Container
         $this->rooms = new RoomRepository($connection);
         $this->reservations = new ReservationRepository($connection);
         $this->requests = new ServiceRequestRepository($connection);
-        $this->stays = new StayViewFactory($this->hotels, $this->rooms, $this->reservations, $this->users);
+        $this->stays = new StayViewFactory($this->hotels, $this->rooms, $this->reservations, $this->users, new ChargeRepository($connection));
         $this->guard = new AccessGuard($this->reservations, $this->rooms, $this->requests);
         $this->transaction = new TransactionRunner($connection);
         $this->auth = new Auth($session, $this->users);

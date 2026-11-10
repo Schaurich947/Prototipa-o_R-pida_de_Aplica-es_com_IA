@@ -32,9 +32,21 @@ final class HotelPanelQuery
     /** @return list<array{charge: Charge, stay: StayView}> receipts the reception must check */
     public function getChargesToReview(Hotel $hotel): array
     {
+        return $this->withStays($this->charges->findUnderReviewByHotel($hotel->id));
+    }
+
+    /** @return list<array{charge: Charge, stay: StayView}> unpaid charges that can be received at the desk */
+    public function getOpenCharges(Hotel $hotel): array
+    {
+        return $this->withStays($this->charges->findOpenByHotel($hotel->id));
+    }
+
+    /** @param list<Charge> $charges @return list<array{charge: Charge, stay: StayView}> */
+    private function withStays(array $charges): array
+    {
         return array_map(
             fn (Charge $charge) => ['charge' => $charge, 'stay' => $this->stays->build($this->reservations->findById($charge->reservationId) ?? throw new DomainException('Reserva não encontrada.'))],
-            $this->charges->findUnderReviewByHotel($hotel->id),
+            $charges,
         );
     }
 

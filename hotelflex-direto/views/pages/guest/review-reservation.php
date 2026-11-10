@@ -43,7 +43,7 @@ $details = [
             </div>
         </section>
         <fieldset class="card">
-            <legend class="card-header card-title">Forma de pagamento (Pix direto ao hotel)</legend>
+            <legend class="card-header card-title">Forma de pagamento (direto ao hotel)</legend>
             <div class="card-content">
                 <?php foreach (PaymentPlan::cases() as $plan): ?>
                     <?php $parts = $plan->splitAmount($total); ?>
@@ -53,7 +53,9 @@ $details = [
                             <span class="font-medium"><?= e($plan->label()) ?></span><br>
                             <span class="text-muted-foreground">
                                 <?= e(formatMoney($parts[0])) ?> até <?= e(formatMoment($paymentDeadline)) ?>
-                                <?= isset($parts[1]) ? ' + ' . e(formatMoney($parts[1])) . ' até ' . e(formatMoment($stay->startsAt())) : '' ?>
+                                <?php if (isset($parts[1])): ?>
+                                    + <?= e(formatMoney($parts[1])) ?> <?= $plan->isRestPaidAtDesk() ? 'no hotel, até o check-in' : 'via Pix até ' . e(formatMoment($stay->startsAt())) ?>
+                                <?php endif; ?>
                             </span>
                         </span>
                     </label>

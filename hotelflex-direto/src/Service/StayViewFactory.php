@@ -10,6 +10,7 @@ use HotelFlex\Domain\Hotel;
 use HotelFlex\Domain\Reservation;
 use HotelFlex\Domain\Room;
 use HotelFlex\Domain\User;
+use HotelFlex\Repository\ChargeRepository;
 use HotelFlex\Repository\HotelRepository;
 use HotelFlex\Repository\ReservationRepository;
 use HotelFlex\Repository\RoomRepository;
@@ -29,6 +30,7 @@ final class StayViewFactory
         private readonly RoomRepository $rooms,
         private readonly ReservationRepository $reservations,
         private readonly UserRepository $users,
+        private readonly ?ChargeRepository $charges = null,
     ) {
     }
 
@@ -47,6 +49,7 @@ final class StayViewFactory
             Availability::getMaxLateCheckoutHours($hotel, $reservation, $next),
             $this->getGuest($reservation->userId)?->name ?? 'Hóspede',
             $this->getGuest($reservation->userId)?->whatsappPhone,
+            $reservation->id > 0 ? (int) $this->charges?->sumOpen($reservation->id) : 0,
         );
     }
 

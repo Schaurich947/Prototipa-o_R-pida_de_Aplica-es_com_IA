@@ -6,6 +6,7 @@ namespace HotelFlex\Service;
 
 use DateTimeImmutable;
 use HotelFlex\Domain\Charge;
+use HotelFlex\Domain\PaymentMethod;
 
 /** Texts of every step of the reservation, for the guest and for the hotel. */
 final class ReservationMessages
@@ -21,7 +22,9 @@ final class ReservationMessages
             'Sem o comprovante até esse prazo, a reserva expira e o quarto é liberado.',
         ];
         if (isset($charges[1])) {
-            $lines[] = 'O restante (' . self::money($charges[1]->amountCents) . ') deve ser pago até ' . self::moment($charges[1]->dueAt) . '.';
+            $lines[] = $charges[1]->payAtDesk
+                ? 'O restante (' . self::money($charges[1]->amountCents) . ') você paga no hotel, até o check-in: dinheiro, cartão ou Pix no balcão.'
+                : 'O restante (' . self::money($charges[1]->amountCents) . ') deve ser pago até ' . self::moment($charges[1]->dueAt) . '.';
         }
 
         return self::forStay($stay, 'reserva criada · aguardando pagamento', implode("\n", $lines));
@@ -44,6 +47,13 @@ final class ReservationMessages
         return self::forStay($stay, $hasConfirmedReservation ? 'reserva confirmada' : 'pagamento confirmado', $hasConfirmedReservation
             ? $text . "\nSua reserva está confirmada: " . self::period($stay) . '.'
             : $text);
+    }
+
+    public static function paymentReceivedAtDesk(StayView $stay, Charge $charge, PaymentMethod $method, bool $hasConfirmedReservation): Message
+    {
+        $text = 'Recebemos ' . self::money($charge->amountCents) . " ({$charge->description}) por {$method->label()}.";
+
+        return self::forStay($stay, $hasConfirmedReservation ? 'reserva confirmada' : 'pagamento recebido', $hasConfirmedReservation ? $text . "\nSua reserva está confirmada." : $text);
     }
 
     public static function paymentRejected(StayView $stay, Charge $charge, string $reason): Message

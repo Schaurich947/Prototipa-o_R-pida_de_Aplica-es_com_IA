@@ -36,8 +36,8 @@ O WhatsApp automático só é enviado para quem autorizou, e a data da autoriza�
 
 | Perfil | Telas |
 |---|---|
-| Hóspede | Minhas reservas (todos os hotéis, com histórico), Nova reserva (entrada e saída no calendário, filtros por cidade, categoria e diária máxima, ordenação por preço ou nome), Revisão da reserva (Pix à vista ou sinal de 50% + restante até o check-in, aceite da política de cancelamento), Detalhe da reserva (andamento, Pix, comprovante, horários, adiar, cancelar, mensagens, WhatsApp do hotel), Meu perfil |
-| Recepção | Painel do dia (chegadas, hospedados, limpeza, situação do pagamento), Pagamentos (conferir comprovantes), Solicitações (pedidos de horário) |
+| Hóspede | Minhas reservas (todos os hotéis, com histórico), Nova reserva (entrada e saída no calendário, filtros por cidade, categoria e diária máxima, ordenação por preço ou nome), Revisão da reserva (Pix à vista; sinal de 50% via Pix + restante via Pix; ou sinal via Pix + restante no hotel em dinheiro, cartão ou Pix; aceite da política de cancelamento), Detalhe da reserva (andamento, Pix, comprovante, horários, adiar, cancelar, mensagens, WhatsApp do hotel), Meu perfil |
+| Recepção | Painel do dia (chegadas, hospedados, limpeza, situação do pagamento e saldo em aberto), Pagamentos (conferir comprovantes Pix e registrar recebimentos no balcão: dinheiro, cartão na maquininha ou Pix), Solicitações (pedidos de horário) |
 | Administrador | Tudo, alternando entre hotéis e hóspedes; registra devoluções |
 
 Contas de demonstração (senha `Demo@1234`): `admin@hotelflex.test`, `recepcao.centro@hotelflex.test`, `recepcao.marazul@hotelflex.test`, `ana@hotelflex.test`, `bruno@hotelflex.test`.
@@ -79,7 +79,7 @@ composer install
 composer test
 ```
 
-São 41 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
+São 45 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
 
 O teste de navegador cobre a jornada completa. Rode com o banco recém-criado:
 
@@ -99,3 +99,12 @@ set BASE_URL=http://localhost/hotelflex-direto&& node tests/e2e/jornada-completa
 - **Permissões:** hóspede só vê as próprias reservas, recepção só o próprio hotel. Um id de outra conta responde "não encontrado".
 - **Concorrência:** mudanças de status são condicionais (ninguém aprova o mesmo comprovante duas vezes), as reservas usam trava de linha contra reserva dupla e a fila usa `SKIP LOCKED`.
 - **Valores:** sempre recalculados no servidor, em centavos.
+
+## Formas de pagamento
+
+| Forma | Como funciona |
+|---|---|
+| Pix com comprovante | O hóspede paga para a chave do hotel e envia o comprovante; a recepção confere. |
+| No balcão (dinheiro, débito, crédito, Pix) | A recepção registra o recebimento na tela Pagamentos; fica salvo quem recebeu, quando e como. |
+
+O **sinal** é sempre via Pix com comprovante, porque garante a reserva contra no-show. **Cartão online** (pago no site) ficou fora de propósito: exige um intermediador de pagamento (Mercado Pago, PagSeguro, Stripe), com taxas e regras de segurança de cartão (PCI), e iria contra a proposta de pagamento direto ao hotel. Cartões são aceitos na maquininha do próprio hotel, e o sistema nunca guarda dados de cartão.

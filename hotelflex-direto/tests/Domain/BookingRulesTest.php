@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace HotelFlex\Tests\Domain;
 
 use DateTimeImmutable;
+use HotelFlex\Domain\Charge;
+use HotelFlex\Domain\ChargeKind;
+use HotelFlex\Domain\ChargeStatus;
 use HotelFlex\Domain\DomainException;
+use HotelFlex\Domain\PaymentMethod;
 use HotelFlex\Domain\PaymentPlan;
 use HotelFlex\Domain\StayDates;
 use PHPUnit\Framework\TestCase;
@@ -41,5 +45,34 @@ final class BookingRulesTest extends TestCase
     {
         $this->assertSame([32000, 32000], PaymentPlan::Deposit->splitAmount(64000));
         $this->assertSame([16000, 16001], PaymentPlan::Deposit->splitAmount(32001));
+    }
+
+    public function testDeskPlanKeepsThePixDepositAndMovesTheRestToTheDesk(): void
+    {
+        $this->assertSame([32000, 32000], PaymentPlan::DepositPlusDesk->splitAmount(64000));
+        $this->assertTrue(PaymentPlan::DepositPlusDesk->isRestPaidAtDesk());
+        $this->assertFalse(PaymentPlan::Deposit->isRestPaidAtDesk());
+    }
+
+    public function testDeskChargeAsksNoReceiptButCanBeReceivedInPerson(): void
+    {
+        $deskCharge = new Charge(1, 1, ChargeKind::Booking, 'Restante', 32000, ChargeStatus::Pending, null, null, null, null, null, new DateTimeImmutable(), true);
+
+        $this->assertFalse($deskCharge->acceptsReceipt());
+        $this->assertTrue($deskCharge->canBeReceivedAtDesk());
+    }
+
+    public function testRefundsAreNeverReceivedAtTheDesk(): void
+    {
+        $refund = new Charge(1, 1, ChargeKind::Refund, 'Devolução', 32000, ChargeStatus::Pending, null, null, null, null, null, new DateTimeImmutable());
+
+        $this->assertFalse($refund->canBeReceivedAtDesk());
+    }
+
+    public function testCardsAreOnlyTakenAtTheDeskTerminal(): void
+    {
+        $this->assertNotContains(PaymentMethod::PixReceipt, PaymentMethod::deskMethods());
+        $this->assertContains(PaymentMethod::Cash, PaymentMethod::deskMethods());
+        $this->assertContains(PaymentMethod::CreditCard, PaymentMethod::deskMethods());
     }
 }

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use HotelFlex\Domain\Charge;
 use HotelFlex\Domain\ChargeKind;
 use HotelFlex\Domain\ChargeStatus;
+use HotelFlex\Domain\PaymentMethod;
 use HotelFlex\Service\StoredReceipt;
 use PDO;
 
@@ -20,11 +21,11 @@ final class ChargeRepository
     {
     }
 
-    public function create(int $reservationId, ChargeKind $kind, string $description, int $amountCents, ChargeStatus $status, ?DateTimeImmutable $dueAt, DateTimeImmutable $now): int
+    public function create(int $reservationId, ChargeKind $kind, string $description, int $amountCents, ChargeStatus $status, ?DateTimeImmutable $dueAt, DateTimeImmutable $now, bool $payAtDesk = false): int
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO charges (reservation_id, kind, description, amount_cents, status, due_at, created_at)
-             VALUES (:reservation_id, :kind, :description, :amount_cents, :status, :due_at, :created_at)',
+            'INSERT INTO charges (reservation_id, kind, description, amount_cents, status, due_at, created_at, pay_at_desk)
+             VALUES (:reservation_id, :kind, :description, :amount_cents, :status, :due_at, :created_at, :pay_at_desk)',
         );
         $statement->execute([
             'reservation_id' => $reservationId,
@@ -34,6 +35,7 @@ final class ChargeRepository
             'status' => $status->value,
             'due_at' => $dueAt?->format(self::DATE_FORMAT),
             'created_at' => $now->format(self::DATE_FORMAT),
+            'pay_at_desk' => $payAtDesk ? 1 : 0,
         ]);
 
         return (int) $this->connection->lastInsertId();
@@ -98,16 +100,56 @@ final class ChargeRepository
     public function markReviewed(int $chargeId, bool $isApproved, ?string $reason, DateTimeImmutable $now): bool
     {
         $statement = $this->connection->prepare(
-            "UPDATE charges SET status = :status, rejection_reason = :reason, reviewed_at = :reviewed_at WHERE id = :id AND status = 'under_review'",
+            "UPDATE charges SET status = :status, rejection_reason = :reason, reviewed_at = :reviewed_at, paid_method = :method WHERE id = :id AND status = 'under_review'",
         );
         $statement->execute([
             'status' => ($isApproved ? ChargeStatus::Paid : ChargeStatus::Pending)->value,
+            'method' => $isApproved ? PaymentMethod::PixReceipt->value : null,
             'reason' => $reason,
             'reviewed_at' => $now->format(self::DATE_FORMAT),
             'id' => $chargeId,
         ]);
 
         return $statement->rowCount() === 1;
+    }
+
+    /** Payment taken in person by the reception (cash, card terminal or Pix at the desk). */
+    public function markPaidAtDesk(int $chargeId, PaymentMethod $method, int $receivedBy, DateTimeImmutable $now): bool
+    {
+        $statement = $this->connection->prepare(
+            "UPDATE charges SET status = 'paid', paid_method = :method, received_by = :received_by, reviewed_at = :now, rejection_reason = NULL
+             WHERE id = :id AND status = 'pending' AND kind <> 'refund'",
+        );
+        $statement->execute(['method' => $method->value, 'received_by' => $receivedBy, 'now' => $now->format(self::DATE_FORMAT), 'id' => $chargeId]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    /** @return list<Charge> unpaid charges of active reservations, to be received at the desk */
+    public function findOpenByHotel(int $hotelId): array
+    {
+        $statement = $this->connection->prepare(
+            "SELECT charges.* FROM charges
+             JOIN reservations res ON res.id = charges.reservation_id
+             JOIN rooms ON rooms.id = res.room_id
+             WHERE rooms.hotel_id = :hotel_id AND charges.status = 'pending' AND charges.kind <> 'refund'
+               AND res.status IN ('pending_payment', 'confirmed', 'checked_in')
+             ORDER BY charges.due_at",
+        );
+        $statement->execute(['hotel_id' => $hotelId]);
+
+        return array_map(Charge::fromRow(...), $statement->fetchAll());
+    }
+
+    /** What the guest still owes (unpaid or waiting for review). */
+    public function sumOpen(int $reservationId): int
+    {
+        $statement = $this->connection->prepare(
+            "SELECT COALESCE(SUM(amount_cents), 0) FROM charges WHERE reservation_id = :id AND status IN ('pending', 'under_review') AND kind <> 'refund'",
+        );
+        $statement->execute(['id' => $reservationId]);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function updatePendingAmount(int $chargeId, int $amountCents, ?string $description = null): void

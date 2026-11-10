@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotelFlex\Http\Controller;
 
 use HotelFlex\Domain\DomainException;
+use HotelFlex\Domain\PaymentMethod;
 use HotelFlex\Http\Auth;
 use HotelFlex\Http\ContextSelector;
 use HotelFlex\Http\HttpRequest;
@@ -40,6 +41,7 @@ final class PaymentsController
             'hotel' => $hotel,
             'hotelOptions' => $this->context->getHotelOptions($actor),
             'items' => $this->queries->getChargesToReview($hotel),
+            'openItems' => $this->queries->getOpenCharges($hotel),
         ]);
     }
 
@@ -72,6 +74,16 @@ final class PaymentsController
             'Comprovante recusado. O hóspede recebeu o motivo e pode enviar outro.',
             self::HOTEL_PATH,
         );
+    }
+
+    /** @param array<string, int> $params */
+    public function receiveAtDesk(HttpRequest $request, array $params): never
+    {
+        $actor = $this->auth->requireUser();
+        $this->actions->run(function () use ($actor, $request, $params): void {
+            $method = PaymentMethod::tryFrom($request->getBodyString('method')) ?? throw new DomainException('Escolha como o pagamento foi recebido.');
+            $this->charges->receiveAtDesk($actor, $params['id'], $method);
+        }, 'Recebimento registrado. O hóspede foi avisado.', self::HOTEL_PATH);
     }
 
     /** @param array<string, int> $params */

@@ -28,6 +28,8 @@ final readonly class StayView
         public string $guestName,
         /** Only set when the guest has a WhatsApp number on file (used for the contact button). */
         public ?PhoneNumber $guestPhone = null,
+        /** Unpaid amount (pending or under review), shown to the reception at check-in and check-out. */
+        public int $openBalanceCents = 0,
     ) {
         $this->billing = Pricing::calculateBillingSummary($hotel, $room, $reservation);
     }
