@@ -12,6 +12,7 @@ use HotelFlex\Domain\ChargeStatus;
 use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\Reservation;
+use HotelFlex\Domain\PaymentPlan;
 use HotelFlex\Domain\ReservationStatus;
 use HotelFlex\Domain\Role;
 use HotelFlex\Domain\User;
@@ -35,13 +36,26 @@ final class ChargeService
     ) {
     }
 
-    public function createBookingCharge(StayView $stay): Charge
+    /**
+     * Paying the first charge (full amount or deposit) confirms the reservation;
+     * with a deposit, the rest is due by check-in time.
+     *
+     * @return list<Charge>
+     */
+    public function createBookingCharges(StayView $stay, PaymentPlan $plan): array
     {
         $now = $this->clock->now();
-        $dueAt = $now->modify("+{$stay->hotel->paymentDeadlineHours} hours");
-        $chargeId = $this->charges->create($stay->reservation->id, ChargeKind::Booking, 'Diárias da reserva', $stay->billing->totalCents(), ChargeStatus::Pending, $dueAt, $now);
+        $parts = $plan->splitAmount($stay->billing->totalCents());
+        $descriptions = $plan === PaymentPlan::Full ? ['Diárias da reserva'] : ['Sinal de ' . PaymentPlan::DEPOSIT_PERCENT . '% das diárias', 'Restante das diárias'];
+        $dueDates = [$now->modify("+{$stay->hotel->paymentDeadlineHours} hours"), $stay->startsAt()];
 
-        return $this->charges->findById($chargeId) ?? throw new DomainException('Cobrança não encontrada.');
+        $charges = [];
+        foreach ($parts as $index => $amountCents) {
+            $chargeId = $this->charges->create($stay->reservation->id, ChargeKind::Booking, $descriptions[$index], $amountCents, ChargeStatus::Pending, $dueDates[$index], $now);
+            $charges[] = $this->charges->findById($chargeId) ?? throw new DomainException('Cobrança não encontrada.');
+        }
+
+        return $charges;
     }
 
     /** @param array<string, mixed> $uploadedFile one entry of $_FILES */

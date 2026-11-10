@@ -18,7 +18,7 @@ final class ReservationMessagesTest extends TestCase
     public function testCreatedMessageTellsHowToPayAndTheDeadline(): void
     {
         $charge = new Charge(1, 1, ChargeKind::Booking, 'Diárias da reserva', 64000, ChargeStatus::Pending, new DateTimeImmutable('2026-11-11 15:00'), null, null, null, null, new DateTimeImmutable());
-        $message = ReservationMessages::created($this->stay(), $charge);
+        $message = ReservationMessages::created($this->stay(), [$charge]);
 
         $this->assertStringContainsString('HF-1', $message->subject);
         $this->assertStringContainsString('R$ 640,00', $message->body);

@@ -5,3 +5,4 @@
 <title><?= e(isset($pageTitle) ? "{$pageTitle} · HotelFlex" : 'HotelFlex') ?></title>
 <link rel="stylesheet" href="<?= e(url('/assets/css/app.css')) ?>">
 <script src="<?= e(url('/assets/js/flex-hours.js')) ?>" defer></script>
+<script src="<?= e(url('/assets/js/date-range.js')) ?>" defer></script>

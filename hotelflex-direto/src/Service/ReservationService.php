@@ -10,6 +10,8 @@ use HotelFlex\Domain\Availability;
 use HotelFlex\Domain\CancellationPolicy;
 use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
+use HotelFlex\Domain\PaymentPlan;
+use HotelFlex\Domain\StayDates;
 use HotelFlex\Domain\Reservation;
 use HotelFlex\Domain\ReservationStatus;
 use HotelFlex\Domain\Room;
@@ -21,8 +23,6 @@ use HotelFlex\Repository\ServiceRequestRepository;
 /** Guest self-service: book, change dates and cancel. */
 final class ReservationService
 {
-    public const MAX_NIGHTS = 30;
-
     public function __construct(
         private readonly ReservationRepository $reservations,
         private readonly RoomRepository $rooms,
@@ -36,34 +36,38 @@ final class ReservationService
     ) {
     }
 
-    public function book(User $guest, int $roomId, DateTimeImmutable $checkInDate, int $nights): int
+    /** The guest must accept the cancellation policy shown on the review screen. */
+    public function book(User $guest, int $roomId, StayDates $dates, PaymentPlan $plan, bool $hasAcceptedPolicy): int
     {
-        $this->assertValidDates($checkInDate, $nights);
+        if (!$hasAcceptedPolicy) {
+            throw new DomainException('Para reservar, confirme que leu a política de cancelamento.');
+        }
+        $dates->assertValid($this->clock->now());
         $room = $this->rooms->findById($roomId) ?? throw new DomainException('Quarto não encontrado.');
 
-        return $this->transaction->run(function () use ($guest, $room, $checkInDate, $nights): int {
+        return $this->transaction->run(function () use ($guest, $room, $dates, $plan): int {
             $this->rooms->lockForUpdate($room->id);
-            $this->assertRoomIsFree($room, $checkInDate, $nights, null);
-            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $checkInDate, $nights);
+            $this->assertRoomIsFree($room, $dates, null);
+            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $dates->checkInDate, $dates->nights);
             $stay = $this->stays->build($this->reservations->findById($reservationId) ?? throw new DomainException('Reserva não encontrada.'));
-            $charge = $this->charges->createBookingCharge($stay);
-            $this->notifier->notifyGuest($stay, ReservationMessages::created($stay, $charge));
+            $charges = $this->charges->createBookingCharges($stay, $plan);
+            $this->notifier->notifyGuest($stay, ReservationMessages::created($stay, $charges));
             $this->notifier->notifyHotelStaff($stay, ReservationMessages::newReservationForHotel($stay));
 
             return $reservationId;
         });
     }
 
-    public function changeDates(User $actor, int $reservationId, DateTimeImmutable $checkInDate, int $nights): void
+    public function changeDates(User $actor, int $reservationId, StayDates $dates): void
     {
         $reservation = $this->getEditableReservation($actor, $reservationId);
-        $this->assertValidDates($checkInDate, $nights);
+        $dates->assertValid($this->clock->now());
         $room = $this->rooms->findById($reservation->roomId) ?? throw new DomainException('Quarto não encontrado.');
 
-        $this->transaction->run(function () use ($reservation, $room, $checkInDate, $nights): void {
+        $this->transaction->run(function () use ($reservation, $room, $dates): void {
             $this->rooms->lockForUpdate($room->id);
-            $this->assertRoomIsFree($room, $checkInDate, $nights, $reservation->id);
-            $this->reservations->updateDates($reservation->id, $checkInDate, $nights);
+            $this->assertRoomIsFree($room, $dates, $reservation->id);
+            $this->reservations->updateDates($reservation->id, $dates->checkInDate, $dates->nights);
             $this->requests->cancelPendingForReservation($reservation->id, $this->clock->now());
             $updated = $this->reservations->findById($reservation->id) ?? $reservation;
             $this->charges->adjustToTotal($updated, 'Diferença por alteração de datas');
@@ -97,20 +101,11 @@ final class ReservationService
         return $reservation;
     }
 
-    private function assertValidDates(DateTimeImmutable $checkInDate, int $nights): void
-    {
-        if ($checkInDate < $this->clock->now()->setTime(0, 0)) {
-            throw new DomainException('A data de entrada não pode estar no passado.');
-        }
-        if ($nights < 1 || $nights > self::MAX_NIGHTS) {
-            throw new DomainException('Escolha entre 1 e ' . self::MAX_NIGHTS . ' diárias.');
-        }
-    }
-
-    private function assertRoomIsFree(Room $room, DateTimeImmutable $checkInDate, int $nights, ?int $excludeId): void
+    private function assertRoomIsFree(Room $room, StayDates $dates, ?int $excludeId): void
     {
         $hotel = $this->stays->getHotel($room->hotelId);
-        $checkOutDate = $checkInDate->modify("+{$nights} days");
+        $checkInDate = $dates->checkInDate;
+        $checkOutDate = $dates->checkOutDate;
         $neighbours = $this->reservations->findStaysNear($room->id, $checkInDate, $checkOutDate, $excludeId);
         $startsAt = $checkInDate->setTime($hotel->checkInHour, 0);
         $endsAt = $checkOutDate->setTime($hotel->checkOutHour, 0);

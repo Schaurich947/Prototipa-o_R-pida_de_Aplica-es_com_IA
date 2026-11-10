@@ -57,6 +57,7 @@ final class Routes
         $router->post('/hospede/reservas/{id}/cancelar', $guest('cancel'), $guestRoles);
         $router->get('/hospede/nova-reserva', $booking('showSearch'), $guestRoles);
         $router->post('/hospede/nova-reserva', $booking('book'), $guestRoles);
+        $router->get('/hospede/nova-reserva/revisar', $booking('showReview'), $guestRoles);
 
         $router->get('/api/versao', static fn () => $container->liveUpdateController()->showVersion(), Navigation::SIGNED_IN_ROLES);
     }

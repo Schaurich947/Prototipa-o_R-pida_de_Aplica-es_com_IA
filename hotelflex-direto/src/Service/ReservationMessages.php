@@ -10,14 +10,21 @@ use HotelFlex\Domain\Charge;
 /** Texts of every step of the reservation, for the guest and for the hotel. */
 final class ReservationMessages
 {
-    public static function created(StayView $stay, Charge $charge): Message
+    /** @param list<Charge> $charges the first one confirms the reservation */
+    public static function created(StayView $stay, array $charges): Message
     {
-        return self::forStay($stay, 'reserva criada · aguardando pagamento', implode("\n", [
+        $first = $charges[0];
+        $lines = [
             "Sua reserva no {$stay->hotel->name} foi criada para " . self::period($stay) . '.',
-            'Para confirmar, pague ' . self::money($charge->amountCents) . " via Pix para a chave: {$stay->hotel->pixKey}",
-            'Depois, envie o comprovante na página da reserva até ' . self::moment($charge->dueAt) . '.',
+            'Para confirmar, pague ' . self::money($first->amountCents) . " ({$first->description}) via Pix para a chave: {$stay->hotel->pixKey}",
+            'Depois, envie o comprovante na página da reserva até ' . self::moment($first->dueAt) . '.',
             'Sem o comprovante até esse prazo, a reserva expira e o quarto é liberado.',
-        ]));
+        ];
+        if (isset($charges[1])) {
+            $lines[] = 'O restante (' . self::money($charges[1]->amountCents) . ') deve ser pago até ' . self::moment($charges[1]->dueAt) . '.';
+        }
+
+        return self::forStay($stay, 'reserva criada · aguardando pagamento', implode("\n", $lines));
     }
 
     public static function newReservationForHotel(StayView $stay): Message

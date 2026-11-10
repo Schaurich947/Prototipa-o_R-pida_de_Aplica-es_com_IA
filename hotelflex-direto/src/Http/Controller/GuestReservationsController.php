@@ -8,6 +8,7 @@ use HotelFlex\Domain\CancellationPolicy;
 use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\RequestType;
+use HotelFlex\Domain\StayDates;
 use HotelFlex\Http\Auth;
 use HotelFlex\Http\ContextSelector;
 use HotelFlex\Http\HttpRequest;
@@ -83,8 +84,8 @@ final class GuestReservationsController
     {
         $actor = $this->auth->requireUser();
         $this->actions->run(function () use ($actor, $request, $params): void {
-            $nights = $request->requireBodyInt('nights', 1, ReservationService::MAX_NIGHTS);
-            $this->reservationService->changeDates($actor, $params['id'], $request->requireBodyDate('check_in_date'), $nights);
+            $dates = new StayDates($request->requireBodyDate('check_in_date'), $request->requireBodyDate('check_out_date'));
+            $this->reservationService->changeDates($actor, $params['id'], $dates);
         }, 'Datas alteradas. Horários flexíveis anteriores foram zerados.', $this->getDetailPath($params['id']), $request->body);
     }
 

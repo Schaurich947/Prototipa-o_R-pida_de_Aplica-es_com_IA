@@ -6,7 +6,12 @@ namespace HotelFlex\Service;
 
 use DateTimeImmutable;
 use HotelFlex\Domain\Availability;
+use HotelFlex\Domain\DomainException;
+use HotelFlex\Domain\Reservation;
+use HotelFlex\Domain\ReservationStatus;
 use HotelFlex\Domain\Room;
+use HotelFlex\Domain\StayDates;
+use HotelFlex\Domain\User;
 use HotelFlex\Repository\HotelRepository;
 use HotelFlex\Repository\ReservationRepository;
 use HotelFlex\Repository\RoomRepository;
@@ -29,17 +34,31 @@ final class BookingSearch
     }
 
     /** @return list<RoomOffer> */
-    public function search(DateTimeImmutable $checkInDate, int $nights, string $city): array
+    public function search(StayDates $dates, string $city): array
     {
-        $checkOutDate = $checkInDate->modify("+{$nights} days");
         $offers = [];
-        foreach ($this->rooms->findFreeForDates($checkInDate, $checkOutDate, $city) as $room) {
-            if ($this->fitsBetweenNeighbours($room, $checkInDate, $checkOutDate)) {
-                $offers[] = new RoomOffer($this->stays->getHotel($room->hotelId), $room, $nights);
+        foreach ($this->rooms->findFreeForDates($dates->checkInDate, $dates->checkOutDate, $city) as $room) {
+            if ($this->fitsBetweenNeighbours($room, $dates->checkInDate, $dates->checkOutDate)) {
+                $offers[] = new RoomOffer($this->stays->getHotel($room->hotelId), $room, $dates->nights);
             }
         }
 
         return $offers;
+    }
+
+    /**
+     * What the guest is about to book, shown on the review screen before anything is saved.
+     * Availability is checked again when the booking is confirmed.
+     */
+    public function buildPreview(User $guest, int $roomId, StayDates $dates): StayView
+    {
+        $room = $this->rooms->findById($roomId) ?? throw new DomainException('Quarto não encontrado.');
+        if (!$this->fitsBetweenNeighbours($room, $dates->checkInDate, $dates->checkOutDate)) {
+            throw new DomainException('Este quarto acabou de ficar indisponível nessas datas. Escolha outro.');
+        }
+        $draft = new Reservation(0, 'Nova', $guest->id, $room->id, $dates->checkInDate, $dates->nights, 0, 0, ReservationStatus::PendingPayment);
+
+        return $this->stays->build($draft);
     }
 
     /** Same-day turnovers are allowed only if flexible hours plus cleaning still fit. */
