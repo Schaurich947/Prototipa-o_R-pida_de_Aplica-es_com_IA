@@ -108,6 +108,29 @@ const charges = async (p) => (await p.locator('li:has(> div > span.badge)').allI
   await bruno.goto(brunoUrl)
   log('8d bruno vê:', await bruno.locator('main header .badge').first().innerText(), '|', (await bruno.locator('li > div > span.badge').allInnerTexts()).join(' / '))
 
+  const diego = await login(browser, 'diego@hotelflex.test')
+  await diego.goto(`${BASE}/cafe?hotel=1&data=${inDays(1)}&pessoas=2`)
+  log('11 café oferta:', (await diego.locator('form:has(input[name=payment_option]) .badge').allInnerTexts()).join(' | '), '|', (await diego.locator('label:has(input[name=payment_option]) strong').allInnerTexts()).join(' vs '))
+  await diego.getByRole('button', { name: 'Reservar café da manhã' }).click(); await diego.waitForLoadState('networkidle')
+  const cafeUrl = diego.url(); log('11 café reservado:', await flash(diego), '|', await diego.locator('main header .badge').first().innerText())
+  await diego.setInputFiles('input[name=receipt]', PDF); await diego.getByRole('button', { name: 'Enviar comprovante' }).click(); await diego.waitForLoadState('networkidle')
+  log('11 comprovante café:', await flash(diego))
+  await staff.goto(`${BASE}/hotel/cafe?data=${inDays(1)}`)
+  log('12 cafés do dia:', (await staff.locator('article h2').allInnerTexts()).join(' / '), '|', await staff.locator('form p').innerText())
+  await staff.locator('article:has-text("Diego Rocha")').getByRole('button', { name: 'Aprovar pagamento' }).click(); await staff.waitForLoadState('networkidle')
+  log('12 aprovar café:', await flash(staff))
+  const elisaCafe = () => staff.locator('article:has-text("Elisa Prado")')
+  await elisaCafe().locator('select[name=method]').selectOption('cash'); await elisaCafe().getByRole('button', { name: 'Registrar recebimento' }).click(); await staff.waitForLoadState('networkidle')
+  await elisaCafe().getByRole('button', { name: 'Marcar como atendido' }).click(); await staff.waitForLoadState('networkidle')
+  log('12 elisa balcão + atendido:', await elisaCafe().locator('.badge').innerText(), '|', await elisaCafe().locator('.card-description').innerText())
+  await staff.screenshot({ path: OUT + '/07-cafe-hotel.png', fullPage: true })
+  await diego.goto(cafeUrl); log('13 diego vê:', await diego.locator('main header .badge').first().innerText())
+  for (const people of [10, 10, 1]) {
+    await diego.goto(`${BASE}/cafe?hotel=2&data=${inDays(3)}&pessoas=${people}`)
+    if (await diego.getByRole('button', { name: 'Reservar café da manhã' }).count() === 0) { log('14 lotação:', await flash(diego)); break }
+    await diego.getByRole('button', { name: 'Reservar café da manhã' }).click(); await diego.waitForLoadState('networkidle')
+  }
+
   await ana.goto(BASE + '/perfil'); await ana.fill('#whatsapp-phone', '(49) 99127-7070'); await ana.getByRole('button', { name: 'Salvar preferências' }).click(); await ana.waitForLoadState('networkidle')
   log('9 perfil:', await flash(ana))
   const mobile = await login(browser, 'admin@hotelflex.test', { width: 390, height: 844 })

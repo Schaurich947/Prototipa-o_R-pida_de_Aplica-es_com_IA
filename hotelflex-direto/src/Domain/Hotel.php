@@ -24,6 +24,10 @@ final readonly class Hotel
         public ?PhoneNumber $whatsappPhone,
         public int $paymentDeadlineHours,
         public int $freeCancellationHours,
+        public int $breakfastPriceCents = 0,
+        public int $breakfastStartHour = 6,
+        public int $breakfastEndHour = 10,
+        public int $breakfastDailyCapacity = 0,
     ) {
     }
 
@@ -44,6 +48,15 @@ final readonly class Hotel
             $row['whatsapp_phone'] !== null ? PhoneNumber::fromE164Digits((string) $row['whatsapp_phone']) : null,
             (int) $row['payment_deadline_hours'],
             (int) $row['free_cancellation_hours'],
+            (int) ($row['breakfast_price_cents'] ?? 0),
+            (int) ($row['breakfast_start_hour'] ?? 6),
+            (int) ($row['breakfast_end_hour'] ?? 10),
+            (int) ($row['breakfast_daily_capacity'] ?? 0),
         );
+    }
+
+    public function sellsBreakfast(): bool
+    {
+        return $this->breakfastPriceCents > 0 && $this->breakfastDailyCapacity > 0;
     }
 }

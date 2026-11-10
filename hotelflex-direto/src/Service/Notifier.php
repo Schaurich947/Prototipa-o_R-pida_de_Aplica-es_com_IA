@@ -35,6 +35,21 @@ final class Notifier
         }
     }
 
+    public function notifyUser(int $userId, Message $message): void
+    {
+        $user = $this->users->findById($userId);
+        if ($user !== null) {
+            $this->queue($user, null, $message);
+        }
+    }
+
+    public function notifyHotelStaffById(int $hotelId, Message $message): void
+    {
+        foreach ($this->users->findStaffByHotel($hotelId) as $staffMember) {
+            $this->queue($staffMember, null, $message);
+        }
+    }
+
     private function queue(User $recipient, ?int $reservationId, Message $message): void
     {
         $this->notifications->create($reservationId, $recipient->id, 'email', $recipient->email, $message->subject, $message->body);

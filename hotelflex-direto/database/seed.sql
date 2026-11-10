@@ -2,9 +2,9 @@
 -- Dados de demonstração relativos à data atual. Senha de todas as contas: Demo@1234
 -- O arquivo storage/receipts/exemplo.pdf é criado pelo bin/setup-database.php.
 
-INSERT INTO hotels (id, name, city, check_in_hour, check_out_hour, earliest_check_in_hour, latest_check_out_hour, early_free_hours, cleaning_buffer_hours, pix_key, whatsapp_phone, payment_deadline_hours, free_cancellation_hours) VALUES
-    (1, 'HotelFlex Centro', 'São Paulo',     14, 12, 8, 18, 1, 1, 'financeiro@hotelflexcentro.com.br', '5511940001000', 24, 48),
-    (2, 'Pousada Mar Azul', 'Florianópolis', 15, 11, 9, 17, 0, 1, '12.345.678/0001-90',               '5548991002000', 12, 72);
+INSERT INTO hotels (id, name, city, check_in_hour, check_out_hour, earliest_check_in_hour, latest_check_out_hour, early_free_hours, cleaning_buffer_hours, pix_key, whatsapp_phone, payment_deadline_hours, free_cancellation_hours, breakfast_price_cents, breakfast_start_hour, breakfast_end_hour, breakfast_daily_capacity) VALUES
+    (1, 'HotelFlex Centro', 'São Paulo',     14, 12, 8, 18, 1, 1, 'financeiro@hotelflexcentro.com.br', '5511940001000', 24, 48, 4500, 6, 10, 40),
+    (2, 'Pousada Mar Azul', 'Florianópolis', 15, 11, 9, 17, 0, 1, '12.345.678/0001-90',               '5548991002000', 12, 72, 3800, 7, 10, 20);
 
 INSERT INTO users (id, name, email, password_hash, role, hotel_id, whatsapp_phone, whatsapp_opt_in_at) VALUES
     (1, 'Administrador',      'admin@hotelflex.test',            '$2y$10$WV4szLelhmPJiw9sbbEd9.AmzLMpygaEnZqyhJzqDPxLeclwqfF.W', 'admin', NULL, NULL, NULL),
@@ -64,3 +64,8 @@ INSERT INTO notifications (reservation_id, user_id, channel, recipient, subject,
     (1, 4, 'whatsapp', '5511987654321',      'Reserva HF-1001 criada · aguardando pagamento', 'Sua reserva foi criada. Pague via Pix e envie o comprovante.', 'sent', 1, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY),
     (1, 4, 'email',    'ana@hotelflex.test', 'Reserva HF-1001 confirmada', 'Recebemos seu pagamento. Sua reserva está confirmada.', 'sent', 1, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY),
     (1, 4, 'whatsapp', '5511987654321',      'Reserva HF-1001 confirmada', 'Recebemos seu pagamento. Sua reserva está confirmada.', 'sent', 1, NOW() - INTERVAL 3 DAY, NOW() - INTERVAL 3 DAY);
+
+INSERT INTO breakfast_bookings (code, user_id, hotel_id, breakfast_date, people, unit_price_cents, discount_percent, total_cents, payment_option, status, is_paid, paid_method, due_at, receipt_path, receipt_original_name, receipt_mime, created_at) VALUES
+    ('CF-2001', 6, 1, CURDATE() + INTERVAL 1 DAY, 2, 4500, 5, 8550, 'pix',  'under_review', 0, NULL, NOW() + INTERVAL 12 HOUR, 'exemplo.pdf', 'pix-cafe-carla.pdf', 'application/pdf', NOW() - INTERVAL 1 HOUR),
+    ('CF-2002', 8, 1, CURDATE() + INTERVAL 1 DAY, 3, 4500, 0, 13500, 'desk', 'confirmed',    0, NULL, NULL, NULL, NULL, NULL, NOW() - INTERVAL 2 HOUR),
+    ('CF-2003', 4, 2, CURDATE() - INTERVAL 7 DAY, 1, 3800, 5, 3610,  'pix',  'served',       1, 'pix_receipt', NULL, 'exemplo.pdf', 'pix-cafe-ana.pdf', 'application/pdf', NOW() - INTERVAL 8 DAY);

@@ -13,6 +13,7 @@ use HotelFlex\Http\ContextSelector;
 use HotelFlex\Http\Controller\ActionRunner;
 use HotelFlex\Http\Controller\AuthController;
 use HotelFlex\Http\Controller\BookingController;
+use HotelFlex\Http\Controller\BreakfastController;
 use HotelFlex\Http\Controller\GuestReservationsController;
 use HotelFlex\Http\Controller\HotelPanelController;
 use HotelFlex\Http\Controller\HotelRequestsController;
@@ -21,6 +22,7 @@ use HotelFlex\Http\Controller\PaymentsController;
 use HotelFlex\Http\Controller\ProfileController;
 use HotelFlex\Http\Session;
 use HotelFlex\Notification\SenderFactory;
+use HotelFlex\Repository\BreakfastRepository;
 use HotelFlex\Repository\ChangeTrackerRepository;
 use HotelFlex\Repository\ChargeRepository;
 use HotelFlex\Repository\NotificationRepository;
@@ -32,6 +34,7 @@ use HotelFlex\Repository\UserRepository;
 use HotelFlex\Service\AccessGuard;
 use HotelFlex\Service\AuthService;
 use HotelFlex\Service\BookingSearch;
+use HotelFlex\Service\BreakfastService;
 use HotelFlex\Service\ChargeService;
 use HotelFlex\Service\GuestReservationsQuery;
 use HotelFlex\Service\HotelPanelQuery;
@@ -149,6 +152,19 @@ final class Container
     public function chargeService(): ChargeService
     {
         return new ChargeService($this->charges, $this->reservations, $this->guard, $this->stays, $this->receipts, $this->notifier(), $this->transaction, $this->clock);
+    }
+
+    public function breakfastController(): BreakfastController
+    {
+        return new BreakfastController(
+            $this->auth, $this->context, $this->breakfastService(), new BreakfastRepository($this->connection), $this->hotels, $this->users, $this->receipts, $this->actions, $this->view, $this->clock,
+        );
+    }
+
+    /** Also used by the CLI worker. */
+    public function breakfastService(): BreakfastService
+    {
+        return new BreakfastService(new BreakfastRepository($this->connection), $this->hotels, $this->receipts, $this->notifier(), $this->transaction, $this->clock);
     }
 
     public function liveUpdateController(): LiveUpdateController

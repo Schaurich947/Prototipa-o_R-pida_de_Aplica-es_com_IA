@@ -29,7 +29,7 @@ $isLoop = in_array('--loop', $argv, true);
 
 do {
     try {
-        $expired = $container->chargeService()->expireOverdue();
+        $expired = $container->chargeService()->expireOverdue() + $container->breakfastService()->expireOverdue();
         $summary = $container->dispatcher()->processDue();
         printf("[%s] reservas expiradas: %d · mensagens enviadas: %d · nova tentativa: %d · falhas: %d\n", date('H:i:s'), $expired, $summary['sent'], $summary['retrying'], $summary['failed']);
     } catch (Throwable $error) {

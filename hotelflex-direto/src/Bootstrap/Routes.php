@@ -48,6 +48,16 @@ final class Routes
         $router->post('/hotel/cobrancas/{id}/receber', $payments('receiveAtDesk'), $hotelRoles);
         $router->post('/hospede/cobrancas/{id}/comprovante', $payments('submitReceipt'), $guestRoles);
         $router->get('/cobrancas/{id}/arquivo', $payments('downloadReceipt'), Navigation::SIGNED_IN_ROLES);
+        $breakfast = static fn (string $method) => static fn (...$args) => $container->breakfastController()->$method(...$args);
+        $router->get('/cafe', $breakfast('showCustomerPage'), $guestRoles);
+        $router->post('/cafe', $breakfast('book'), $guestRoles);
+        $router->get('/cafe/{id}', $breakfast('showBooking'), $guestRoles);
+        $router->post('/cafe/{id}/comprovante', $breakfast('submitReceipt'), $guestRoles);
+        $router->post('/cafe/{id}/cancelar', $breakfast('cancel'), $guestRoles);
+        $router->get('/cafe/{id}/arquivo', $breakfast('downloadReceipt'), Navigation::SIGNED_IN_ROLES);
+        $router->get('/hotel/cafe', $breakfast('showHotelPage'), $hotelRoles);
+        $router->post('/hotel/cafe/{id}', $breakfast('hotelAction'), $hotelRoles);
+
         $router->get('/perfil', $profile('show'), Navigation::SIGNED_IN_ROLES);
         $router->post('/perfil', $profile('update'), Navigation::SIGNED_IN_ROLES);
 

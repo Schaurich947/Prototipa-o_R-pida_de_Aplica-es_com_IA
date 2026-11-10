@@ -22,7 +22,8 @@ final class ChangeTrackerRepository
                 (SELECT MAX(updated_at) FROM service_requests),
                 (SELECT COUNT(*) FROM service_requests),
                 (SELECT COUNT(*) FROM reservations),
-                (SELECT MAX(updated_at) FROM charges))',
+                (SELECT MAX(updated_at) FROM charges),
+                (SELECT MAX(updated_at) FROM breakfast_bookings))',
         );
 
         return hash('sha256', (string) $statement->fetchColumn());

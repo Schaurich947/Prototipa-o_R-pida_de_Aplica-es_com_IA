@@ -3,7 +3,7 @@
 -- Valores monetários em centavos (INT) para evitar erros de arredondamento.
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS notifications, charges, service_requests, reservations, rooms, users, hotels;
+DROP TABLE IF EXISTS breakfast_bookings, notifications, charges, service_requests, reservations, rooms, users, hotels;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE hotels (
@@ -21,6 +21,11 @@ CREATE TABLE hotels (
     whatsapp_phone VARCHAR(20) NULL,
     payment_deadline_hours SMALLINT UNSIGNED NOT NULL DEFAULT 24,
     free_cancellation_hours SMALLINT UNSIGNED NOT NULL DEFAULT 48,
+    -- Café da manhã vendido também para quem não está hospedado (0 = o hotel não vende avulso).
+    breakfast_price_cents INT UNSIGNED NOT NULL DEFAULT 0,
+    breakfast_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 6,
+    breakfast_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 10,
+    breakfast_daily_capacity SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -131,4 +136,31 @@ CREATE TABLE notifications (
     CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users (id),
     INDEX idx_notifications_queue (status, next_attempt_at),
     INDEX idx_notifications_reservation (reservation_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Café da manhã avulso. Pagamento via Pix com comprovante (com desconto) ou no balcão.
+CREATE TABLE breakfast_bookings (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    user_id INT UNSIGNED NOT NULL,
+    hotel_id INT UNSIGNED NOT NULL,
+    breakfast_date DATE NOT NULL,
+    people TINYINT UNSIGNED NOT NULL,
+    unit_price_cents INT UNSIGNED NOT NULL,
+    discount_percent TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    total_cents INT UNSIGNED NOT NULL,
+    payment_option ENUM('pix', 'desk') NOT NULL,
+    status ENUM('pending_payment', 'under_review', 'confirmed', 'served', 'cancelled', 'expired') NOT NULL,
+    is_paid TINYINT(1) NOT NULL DEFAULT 0,
+    paid_method ENUM('pix_receipt', 'cash', 'debit_card', 'credit_card', 'pix_desk') NULL,
+    due_at DATETIME NULL,
+    receipt_path VARCHAR(120) NULL,
+    receipt_original_name VARCHAR(160) NULL,
+    receipt_mime VARCHAR(40) NULL,
+    rejection_reason VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_breakfast_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_breakfast_hotel FOREIGN KEY (hotel_id) REFERENCES hotels (id),
+    INDEX idx_breakfast_hotel_date (hotel_id, breakfast_date, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

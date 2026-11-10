@@ -17,8 +17,10 @@ final class Navigation
         ['path' => '/hotel/liberacao', 'label' => 'Painel do dia', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
         ['path' => '/hotel/pagamentos', 'label' => 'Pagamentos', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
         ['path' => '/hotel/solicitacoes', 'label' => 'Solicitações', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
+        ['path' => '/hotel/cafe', 'label' => 'Café da manhã', 'area' => 'Hotel', 'roles' => self::HOTEL_ROLES],
         ['path' => '/hospede/reservas', 'label' => 'Minhas reservas', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
         ['path' => '/hospede/nova-reserva', 'label' => 'Nova reserva', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
+        ['path' => '/cafe', 'label' => 'Café da manhã', 'area' => 'Hóspede', 'roles' => self::GUEST_ROLES],
         ['path' => '/perfil', 'label' => 'Meu perfil', 'area' => 'Conta', 'roles' => self::SIGNED_IN_ROLES],
     ];
 

@@ -79,7 +79,7 @@ composer install
 composer test
 ```
 
-São 45 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
+São 53 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
 
 O teste de navegador cobre a jornada completa. Rode com o banco recém-criado:
 
@@ -108,3 +108,22 @@ set BASE_URL=http://localhost/hotelflex-direto&& node tests/e2e/jornada-completa
 | No balcão (dinheiro, débito, crédito, Pix) | A recepção registra o recebimento na tela Pagamentos; fica salvo quem recebeu, quando e como. |
 
 O **sinal** é sempre via Pix com comprovante, porque garante a reserva contra no-show. **Cartão online** (pago no site) ficou fora de propósito: exige um intermediador de pagamento (Mercado Pago, PagSeguro, Stripe), com taxas e regras de segurança de cartão (PCI), e iria contra a proposta de pagamento direto ao hotel. Cartões são aceitos na maquininha do próprio hotel, e o sistema nunca guarda dados de cartão.
+
+## Descontos por forma de pagamento
+
+| Forma | Desconto nas diárias |
+|---|---|
+| Pix à vista: 100% na reserva | 5% |
+| 50% via Pix + restante via Pix até 24h antes da entrada | 2% (indisponível se a entrada for muito próxima) |
+| 50% via Pix + restante no hotel | sem desconto |
+
+O desconto vale só para as diárias. Horas extras e diferenças pedidas depois são cobradas sem desconto.
+
+## Café da manhã avulso
+
+Qualquer cliente cadastrado, hospedado ou não, pode reservar o café da manhã de um hotel em **Café da manhã**. Escolhe hotel, data e número de pessoas e paga:
+
+- **via Pix antecipado:** 5% de desconto, com comprovante; sem comprovante no prazo, os lugares são liberados;
+- **no hotel:** sem desconto, em dinheiro, cartão ou Pix no balcão.
+
+Cada hotel define o preço por pessoa, o horário e o limite de lugares por dia. A reserva usa trava no banco, então o limite nunca é ultrapassado. Na tela **Café da manhã** do hotel, a recepção vê o dia, confere comprovantes, registra recebimentos no balcão e marca quem foi atendido.
