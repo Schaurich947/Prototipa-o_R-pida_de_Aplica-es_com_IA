@@ -36,7 +36,7 @@ O WhatsApp automático só é enviado para quem autorizou, e a data da autoriza�
 
 | Perfil | Telas |
 |---|---|
-| Hóspede | Minhas reservas (todos os hotéis, com histórico), Nova reserva, Detalhe da reserva (andamento, Pix, comprovante, horários, adiar, cancelar, mensagens, WhatsApp do hotel), Meu perfil |
+| Hóspede | Minhas reservas (todos os hotéis, com histórico), Nova reserva (entrada e saída no calendário, filtros por cidade, categoria e diária máxima, ordenação por preço ou nome), Revisão da reserva (Pix à vista ou sinal de 50% + restante até o check-in, aceite da política de cancelamento), Detalhe da reserva (andamento, Pix, comprovante, horários, adiar, cancelar, mensagens, WhatsApp do hotel), Meu perfil |
 | Recepção | Painel do dia (chegadas, hospedados, limpeza, situação do pagamento), Pagamentos (conferir comprovantes), Solicitações (pedidos de horário) |
 | Administrador | Tudo, alternando entre hotéis e hóspedes; registra devoluções |
 
@@ -79,7 +79,7 @@ composer install
 composer test
 ```
 
-São 33 testes unitários: preço, disponibilidade, cobranças, cancelamento, WhatsApp e mensagens.
+São 41 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
 
 O teste de navegador cobre a jornada completa. Rode com o banco recém-criado:
 
