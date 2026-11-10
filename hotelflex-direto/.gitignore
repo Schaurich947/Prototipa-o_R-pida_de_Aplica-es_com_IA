@@ -1,0 +1,8 @@
+/vendor/
+/node_modules/
+.env
+.phpunit.cache/
+/storage/receipts/*
+/storage/outbox/*
+!/storage/receipts/.gitkeep
+!/storage/outbox/.gitkeep
