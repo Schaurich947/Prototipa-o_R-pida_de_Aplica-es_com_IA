@@ -17,7 +17,12 @@ fs.writeFileSync(FAKE, '<?php echo "não é um PDF"; ?>')
 const errors = []
 const log = (...a) => console.log(...a)
 const flash = async (p) => (await p.locator('.alert').allInnerTexts()).join(' | ') || '(sem flash)'
-const inDays = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10) }
+// Dates in the app's time zone (America/Sao_Paulo), not UTC, so "tomorrow" matches the server near midnight.
+const TIME_ZONE = process.env.APP_TIMEZONE || 'America/Sao_Paulo'
+const inDays = (n) => {
+  const [year, month, day] = new Date().toLocaleDateString('en-CA', { timeZone: TIME_ZONE }).split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + n)).toISOString().slice(0, 10)
+}
 
 async function login(browser, email, viewport = { width: 1280, height: 900 }) {
   const page = await (await browser.newContext({ viewport })).newPage()
@@ -55,6 +60,7 @@ const charges = async (p) => (await p.locator('li:has(> div > span.badge)').allI
   await ana.getByRole('button', { name: 'Confirmar reserva' }).click(); await ana.waitForLoadState('networkidle')
   const reservationUrl = ana.url(); log('1 reservar ->', reservationUrl.replace(BASE, ''), await flash(ana))
   log('1 status:', await ana.locator('main header .badge').first().innerText(), '| pix:', await ana.locator('.font-mono').first().innerText())
+  log('1 pedidos de horário antes de pagar:', await ana.locator('#guest-late_checkout').count(), '|', (await ana.getByText('disponível depois que o pagamento').innerText()).slice(0, 60))
   await ana.screenshot({ path: OUT + '/01-aguardando-pagamento.png', fullPage: true })
   await ana.setInputFiles('input[name=receipt]', FAKE); await ana.getByRole('button', { name: 'Enviar comprovante' }).click(); await ana.waitForLoadState('networkidle')
   log('2 arquivo falso:', await flash(ana))
@@ -73,6 +79,9 @@ const charges = async (p) => (await p.locator('li:has(> div > span.badge)').allI
   log('4 aprovar:', await flash(staff))
   await ana.goto(reservationUrl); log('4 status ana:', await ana.locator('main header .badge').first().innerText())
 
+  await ana.locator('#guest-late_checkout').fill('1'); await ana.locator('form:has(#guest-late_checkout)').getByRole('button', { name: 'Pedir ao hotel' }).click(); await ana.waitForLoadState('networkidle')
+  await ana.getByRole('button', { name: 'Cancelar pedido' }).click(); await ana.waitForLoadState('networkidle')
+  log('5 cancelar pedido:', await flash(ana))
   await ana.locator('#guest-late_checkout').fill('3'); await ana.locator('form:has(#guest-late_checkout)').getByRole('button', { name: 'Pedir ao hotel' }).click(); await ana.waitForLoadState('networkidle')
   await staff.goto(BASE + '/hotel/solicitacoes'); await staff.locator('article:has-text("Ana Souza"):has-text("Saída tardia")').getByRole('button', { name: 'Aprovar' }).click(); await staff.waitForLoadState('networkidle')
   log('5 aprovar saída tardia:', await flash(staff))

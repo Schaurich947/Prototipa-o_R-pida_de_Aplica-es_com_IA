@@ -5,7 +5,8 @@ use HotelFlex\Domain\RequestType;
 /**
  * @var HotelFlex\View\View $view
  * @var HotelFlex\Service\RequestView $requestView
- * @var bool $canResolve
+ * @var bool $canResolve hotel side: approve or reject
+ * @var bool $canCancel guest side: withdraw a pending request
  */
 $request = $requestView->request;
 $stay = $requestView->stay;
@@ -31,6 +32,15 @@ $feeCents = $requestView->feeCents();
             · <span class="font-semibold"><?= $feeCents > 0 ? e(formatMoney($feeCents)) : 'sem custo' ?></span>
         </p>
     </div>
+    <?php if (($canCancel ?? false) && $request->isPending()): ?>
+        <footer class="card-footer -mb-3 p-3">
+            <form method="post" action="<?= e(url("/hospede/pedidos/{$request->id}/cancelar")) ?>">
+                <?= $view->partial('csrf-field') ?>
+                <input type="hidden" name="reservation_id" value="<?= e($stay->reservation->id) ?>">
+                <button type="submit" class="btn btn-outline btn-sm">Cancelar pedido</button>
+            </form>
+        </footer>
+    <?php endif; ?>
     <?php if ($canResolve && $request->isPending()): ?>
         <footer class="card-footer -mb-3 p-3">
             <form method="post" action="<?= e(url("/hotel/solicitacoes/{$request->id}/aprovar")) ?>">

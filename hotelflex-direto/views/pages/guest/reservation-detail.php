@@ -74,7 +74,11 @@ $details = [
             </div>
         </section>
 
-        <?php if ($reservation->status->isActive()): ?>
+        <?php if ($reservation->status === ReservationStatus::PendingPayment): ?>
+            <p class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                <strong class="text-foreground">Entrar mais cedo ou sair mais tarde:</strong> disponível depois que o pagamento da reserva for confirmado pelo hotel.
+            </p>
+        <?php elseif ($reservation->status->isActive()): ?>
             <div class="grid gap-4 md:grid-cols-2">
                 <?php if ($reservation->status === ReservationStatus::Confirmed): ?>
                     <?= $view->partial('stay-flex-request-card', ['stay' => $stay, 'type' => RequestType::EarlyCheckIn, 'hasPendingRequest' => $hasPending(RequestType::EarlyCheckIn)]) ?>
@@ -85,7 +89,7 @@ $details = [
 
         <section class="space-y-3">
             <h2 class="text-base font-semibold">Pedidos ao hotel</h2>
-            <?= $view->partial('request-list', ['requestViews' => $requestViews, 'emptyMessage' => 'Nenhum pedido feito para esta reserva.', 'canResolve' => false]) ?>
+            <?= $view->partial('request-list', ['requestViews' => $requestViews, 'emptyMessage' => 'Nenhum pedido feito para esta reserva.', 'canResolve' => false, 'canCancel' => true]) ?>
         </section>
 
         <?= $view->partial('message-history', ['messages' => $messages]) ?>

@@ -80,6 +80,18 @@ final class GuestReservationsController
     }
 
     /** @param array<string, int> $params */
+    public function cancelRequest(HttpRequest $request, array $params): never
+    {
+        $actor = $this->auth->requireUser();
+        $reservationId = (int) ($request->body['reservation_id'] ?? 0);
+        $this->actions->run(
+            fn () => $this->getDetailPath($this->requestService->cancelRequest($actor, $params['id'])),
+            'Pedido cancelado. Você já pode fazer um novo pedido de horário.',
+            $this->getDetailPath($reservationId),
+        );
+    }
+
+    /** @param array<string, int> $params */
     public function changeDates(HttpRequest $request, array $params): never
     {
         $actor = $this->auth->requireUser();

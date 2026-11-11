@@ -66,6 +66,7 @@ final class Routes
         $router->post('/hospede/reservas/{id}/horarios', $guest('requestHours'), $guestRoles);
         $router->post('/hospede/reservas/{id}/datas', $guest('changeDates'), $guestRoles);
         $router->post('/hospede/reservas/{id}/cancelar', $guest('cancel'), $guestRoles);
+        $router->post('/hospede/pedidos/{id}/cancelar', $guest('cancelRequest'), $guestRoles);
         $router->get('/hospede/nova-reserva', $booking('showSearch'), $guestRoles);
         $router->post('/hospede/nova-reserva', $booking('book'), $guestRoles);
         $router->get('/hospede/nova-reserva/revisar', $booking('showReview'), $guestRoles);

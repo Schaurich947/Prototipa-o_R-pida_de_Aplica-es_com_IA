@@ -48,6 +48,17 @@ final class RequestService
         });
     }
 
+    /** The guest withdraws a pending request (e.g. to ask for a different time). */
+    public function cancelRequest(User $actor, int $requestId): int
+    {
+        $request = $this->requests->findById($requestId) ?? throw new DomainException('Pedido não encontrado.');
+        $this->guard->getOwnReservation($actor, $request->reservationId);
+        $this->assertPending($request->status);
+        $this->markResolved($request->id, RequestStatus::Cancelled);
+
+        return $request->reservationId;
+    }
+
     public function rejectRequest(User $actor, int $requestId): void
     {
         $request = $this->guard->getManagedRequest($actor, $requestId);
@@ -62,6 +73,9 @@ final class RequestService
         $status = $stay->reservation->status;
         if (!$status->isActive()) {
             throw new DomainException('Esta reserva não aceita mais alterações de horário.');
+        }
+        if ($status === ReservationStatus::PendingPayment) {
+            throw new DomainException('Os pedidos de horário ficam disponíveis depois que o pagamento da reserva for confirmado.');
         }
         if ($type === RequestType::EarlyCheckIn && $status === ReservationStatus::CheckedIn) {
             throw new DomainException('A entrada antecipada só pode ser pedida antes do check-in.');

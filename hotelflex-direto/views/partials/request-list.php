@@ -11,7 +11,7 @@
 <?php else: ?>
     <ul class="grid gap-3 md:grid-cols-2">
         <?php foreach ($requestViews as $requestView): ?>
-            <li><?= $view->partial('request-card', ['requestView' => $requestView, 'canResolve' => $canResolve]) ?></li>
+            <li><?= $view->partial('request-card', ['requestView' => $requestView, 'canResolve' => $canResolve, 'canCancel' => $canCancel ?? false]) ?></li>
         <?php endforeach; ?>
     </ul>
 <?php endif; ?>

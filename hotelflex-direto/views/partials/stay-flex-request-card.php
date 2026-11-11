@@ -34,7 +34,7 @@ $suggestedHours = min($currentHours + 1, $stay->getMaxHours($type));
         <?php if ($stay->getMaxHours($type) > 0): ?>
             <footer class="card-footer">
                 <button type="submit" class="btn btn-primary btn-block" <?= $hasPendingRequest ? 'disabled' : '' ?>>
-                    <?= $hasPendingRequest ? 'Pedido enviado · aguardando o hotel' : 'Pedir ao hotel' ?>
+                    <?= $hasPendingRequest ? 'Pedido enviado · para mudar, cancele-o em "Pedidos ao hotel"' : 'Pedir ao hotel' ?>
                 </button>
             </footer>
         <?php endif; ?>
