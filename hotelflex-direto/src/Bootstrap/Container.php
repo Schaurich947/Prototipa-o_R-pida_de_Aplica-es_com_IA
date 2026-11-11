@@ -76,8 +76,10 @@ final class Container
         private readonly Session $session,
         private readonly View $view,
         string $projectRoot,
+        ?Clock $clock = null,
     ) {
-        $this->clock = new SystemClock();
+        // Tests pass a controllable clock to simulate deadlines, midnight and breakfast hours.
+        $this->clock = $clock ?? new SystemClock();
         $this->hotels = new HotelRepository($connection);
         $this->users = new UserRepository($connection);
         $this->rooms = new RoomRepository($connection);
@@ -117,7 +119,7 @@ final class Container
 
     public function guestReservationsController(): GuestReservationsController
     {
-        $queries = new GuestReservationsQuery($this->guard, $this->stays, $this->requests, $this->reservations, $this->charges, $this->notifications);
+        $queries = $this->guestQuery();
 
         return new GuestReservationsController(
             $this->auth, $this->session, $this->context, $queries, $this->reservationService(), $this->requestService(), $this->actions, $this->view, $this->clock,
@@ -126,7 +128,7 @@ final class Container
 
     public function bookingController(): BookingController
     {
-        $search = new BookingSearch($this->rooms, $this->reservations, $this->hotels, $this->stays);
+        $search = $this->bookingSearch();
 
         return new BookingController($this->auth, $this->context, $search, $this->reservationService(), $this->actions, $this->view, $this->clock);
     }
@@ -170,22 +172,32 @@ final class Container
         return new BreakfastService($bookings, new BreakfastRowBuilder($bookings, $this->clock), $this->hotels, $this->reservations, $this->receipts, $this->notifier(), $this->transaction, $this->clock);
     }
 
+    public function bookingSearch(): BookingSearch
+    {
+        return new BookingSearch($this->rooms, $this->reservations, $this->hotels, $this->stays);
+    }
+
+    public function guestQuery(): GuestReservationsQuery
+    {
+        return new GuestReservationsQuery($this->guard, $this->stays, $this->requests, $this->reservations, $this->charges, $this->notifications);
+    }
+
     public function liveUpdateController(): LiveUpdateController
     {
         return new LiveUpdateController(new ChangeTrackerRepository($this->connection));
     }
 
-    private function roomService(): RoomService
+    public function roomService(): RoomService
     {
         return new RoomService($this->rooms, $this->reservations, $this->requests, $this->guard, $this->stays, $this->chargeService(), $this->notifier(), $this->transaction, $this->clock);
     }
 
-    private function requestService(): RequestService
+    public function requestService(): RequestService
     {
         return new RequestService($this->requests, $this->guard, $this->stays, $this->roomService(), $this->notifier(), $this->transaction, $this->clock);
     }
 
-    private function reservationService(): ReservationService
+    public function reservationService(): ReservationService
     {
         return new ReservationService($this->reservations, $this->rooms, $this->requests, $this->guard, $this->stays, $this->chargeService(), $this->notifier(), $this->transaction, $this->clock);
     }
@@ -195,7 +207,7 @@ final class Container
         return new Notifier($this->notifications, $this->users);
     }
 
-    private function panelQuery(): HotelPanelQuery
+    public function panelQuery(): HotelPanelQuery
     {
         return new HotelPanelQuery($this->rooms, $this->reservations, $this->requests, $this->charges, $this->stays);
     }

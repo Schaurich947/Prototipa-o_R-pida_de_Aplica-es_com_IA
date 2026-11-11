@@ -102,4 +102,13 @@ final class BookingRulesTest extends TestCase
         $this->assertTrue(PaymentPlan::Full->isAvailable($firstDueAt, $checkInAt));
         $this->assertTrue(PaymentPlan::DepositPlusDesk->isAvailable($firstDueAt, $checkInAt));
     }
+
+    public function testDeskPlanWorksForASameNightBookingAfterCheckInTime(): void
+    {
+        $checkInAt = new DateTimeImmutable('2026-12-01 14:00');
+        $firstDueAt = new DateTimeImmutable('2026-12-02 23:59');
+
+        $this->assertTrue(PaymentPlan::DepositPlusDesk->isAvailable($firstDueAt, $checkInAt));
+        $this->assertFalse(PaymentPlan::Deposit->isAvailable($firstDueAt, $checkInAt));
+    }
 }

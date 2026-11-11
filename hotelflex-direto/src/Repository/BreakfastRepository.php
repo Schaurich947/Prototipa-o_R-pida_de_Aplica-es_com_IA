@@ -56,12 +56,20 @@ final class BreakfastRepository
         );
     }
 
-    /** Must run inside a transaction: locks the day's rows so two bookings cannot exceed the capacity. */
+    /**
+     * Serializes breakfast sales of one hotel inside a transaction. Locking the hotel row avoids the
+     * deadlocks that range locks on breakfast_bookings caused under concurrent inserts (found by ConcurrencyTest).
+     */
+    public function lockHotel(int $hotelId): void
+    {
+        $this->connection->prepare('SELECT id FROM hotels WHERE id = :id FOR UPDATE')->execute(['id' => $hotelId]);
+    }
+
     public function countSeatsTaken(int $hotelId, DateTimeImmutable $date): int
     {
         $statement = $this->connection->prepare(
             "SELECT COALESCE(SUM(people), 0) FROM breakfast_bookings
-             WHERE hotel_id = :hotel_id AND breakfast_date = :day AND status IN ('pending_payment', 'under_review', 'confirmed', 'served') FOR UPDATE",
+             WHERE hotel_id = :hotel_id AND breakfast_date = :day AND status IN ('pending_payment', 'under_review', 'confirmed', 'served')",
         );
         $statement->execute(['hotel_id' => $hotelId, 'day' => $date->format('Y-m-d')]);
 

@@ -58,12 +58,13 @@ enum PaymentPlan: string
         };
     }
 
-    /** The two-step Pix plan only makes sense if the rest is due after the deposit deadline. */
+    /**
+     * The two-step Pix plan only makes sense if the rest is due after the deposit deadline.
+     * The rest paid at the desk is settled on arrival, so that plan works even for a same-night booking.
+     */
     public function isAvailable(DateTimeImmutable $firstPaymentDueAt, DateTimeImmutable $checkInAt): bool
     {
-        $restDueAt = $this->getRestDueAt($checkInAt);
-
-        return $restDueAt === null || $restDueAt > $firstPaymentDueAt;
+        return $this !== self::Deposit || $this->getRestDueAt($checkInAt) > $firstPaymentDueAt;
     }
 
     /** @return list<int> amounts in cents, in payment order; the parts always add up to the total */

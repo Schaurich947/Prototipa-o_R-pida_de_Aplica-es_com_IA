@@ -46,6 +46,7 @@ final class BreakfastService
         }
 
         return $this->transaction->run(function () use ($customer, $hotel, $date, $people, $option): int {
+            $this->bookings->lockHotel($hotel->id);
             $this->assertSeatsLeft($this->getAvailability($hotel, $date), $people);
             $bookingId = $this->bookings->create($this->rows->build($customer, $hotel, $date, $people, $option));
             $booking = $this->getBooking($bookingId);
@@ -142,6 +143,7 @@ final class BreakfastService
             throw new DomainException('Escolha como foi pago.');
         }
         $this->transaction->run(function () use ($actor, $hotel, $today, $people, $method, $customerName): void {
+            $this->bookings->lockHotel($hotel->id);
             $this->assertSeatsLeft($this->getAvailability($hotel, $today), $people);
             $row = $this->rows->build($actor, $hotel, $today, $people, BreakfastPaymentOption::WalkIn);
             $this->bookings->create([...$row, 'status' => BreakfastStatus::Served->value, 'is_paid' => 1, 'paid_method' => $method->value, 'walk_in_name' => mb_substr(trim($customerName), 0, 120) ?: null]);

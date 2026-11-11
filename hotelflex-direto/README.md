@@ -72,24 +72,12 @@ Por padrão, e-mail e WhatsApp ficam em **modo teste**: as mensagens são salvas
 ## Testes
 
 ```bash
-composer install
+composer test               # unitários (regras puras)
+composer test:integration   # integração, segurança e concorrência (banco de teste próprio)
+composer test:volume        # volume: milhares de registros e tempos
 ```
 
-```bash
-composer test
-```
-
-São 55 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
-
-O teste de navegador cobre a jornada completa. Rode com o banco recém-criado:
-
-```bash
-npm install --no-save playwright && npx playwright install chromium
-```
-
-```bash
-set BASE_URL=http://localhost/hotelflex-direto&& node tests/e2e/jornada-completa.js
-```
+Os testes não mexem no banco do sistema: usam `<DB_NAME>_test`, recriado a cada teste. Detalhes e objetivo de cada grupo em [`tests/README.md`](tests/README.md).
 
 ## Segurança
 
