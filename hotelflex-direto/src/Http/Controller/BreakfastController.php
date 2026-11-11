@@ -52,7 +52,7 @@ final class BreakfastController
             'selectedHotel' => $hotel,
             'selectedDate' => $date,
             'people' => max(1, min(BreakfastService::MAX_PEOPLE, $request->getQueryInt('pessoas') ?? 1)),
-            'seatsLeft' => $hotel && $date ? $this->breakfast->getSeatsLeft($hotel, $date) : null,
+            'seatsLeft' => $hotel && $date ? $this->breakfast->getAvailability($hotel, $date)->freeSeats : null,
             'myBookings' => $this->bookings->findByUser($actor->id),
             'hotelsById' => array_column(array_map(static fn ($item) => ['id' => $item->id, 'hotel' => $item], $this->hotels->findAll()), 'hotel', 'id'),
             'minDate' => $this->clock->now()->format('Y-m-d'),
@@ -112,8 +112,20 @@ final class BreakfastController
             'date' => $date,
             'bookings' => $bookings,
             'customerNames' => $this->getCustomerNames($bookings),
-            'seatsTaken' => array_sum(array_map(static fn ($booking) => $booking->status->holdsSeat() ? $booking->people : 0, $bookings)),
+            'availability' => $this->breakfast->getAvailability($hotel, $date),
+            'isToday' => $date->format('Y-m-d') === $this->clock->now()->format('Y-m-d'),
+            'hasEndedToday' => $this->clock->now() >= $this->clock->now()->setTime($hotel->breakfastEndHour, 0),
         ]);
+    }
+
+    public function sellWalkIn(HttpRequest $request): never
+    {
+        $actor = $this->auth->requireUser();
+        $this->actions->run(function () use ($actor, $request): void {
+            $method = PaymentMethod::tryFrom($request->getBodyString('method')) ?? throw new DomainException('Escolha como foi pago.');
+            $hotelId = $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX);
+            $this->breakfast->sellWalkIn($actor, $hotelId, $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $method, $request->getBodyString('customer_name'));
+        }, 'Venda na hora registrada.', self::HOTEL_PATH);
     }
 
     /** @param array<string, int> $params */

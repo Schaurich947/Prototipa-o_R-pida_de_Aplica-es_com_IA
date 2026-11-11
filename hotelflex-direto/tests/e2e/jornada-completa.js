@@ -125,7 +125,7 @@ const charges = async (p) => (await p.locator('li:has(> div > span.badge)').allI
   await diego.setInputFiles('input[name=receipt]', PDF); await diego.getByRole('button', { name: 'Enviar comprovante' }).click(); await diego.waitForLoadState('networkidle')
   log('11 comprovante café:', await flash(diego))
   await staff.goto(`${BASE}/hotel/cafe?data=${inDays(1)}`)
-  log('12 cafés do dia:', (await staff.locator('article h2').allInnerTexts()).join(' / '), '|', await staff.locator('form p').innerText())
+  log('12 cafés do dia:', (await staff.locator('article h2').allInnerTexts()).join(' / '), '|', (await staff.locator('section[aria-label="Lugares do dia"]').innerText()).replace(/\s+/g, ' '))
   await staff.locator('article:has-text("Diego Rocha")').getByRole('button', { name: 'Aprovar pagamento' }).click(); await staff.waitForLoadState('networkidle')
   log('12 aprovar café:', await flash(staff))
   const elisaCafe = () => staff.locator('article:has-text("Elisa Prado")')
@@ -134,6 +134,17 @@ const charges = async (p) => (await p.locator('li:has(> div > span.badge)').allI
   log('12 elisa balcão + atendido:', await elisaCafe().locator('.badge').innerText(), '|', await elisaCafe().locator('.card-description').innerText())
   await staff.screenshot({ path: OUT + '/07-cafe-hotel.png', fullPage: true })
   await diego.goto(cafeUrl); log('13 diego vê:', await diego.locator('main header .badge').first().innerText())
+  await diego.goto(`${BASE}/cafe`)
+  log('13 aviso venda na hora:', (await diego.locator('aside[aria-label="Venda no local"]').innerText()).replace(/\s+/g, ' ').slice(0, 170))
+  await staff.goto(`${BASE}/hotel/cafe`)
+  log('15 lugares hoje:', (await staff.locator('section[aria-label="Lugares do dia"]').innerText()).replace(/\s+/g, ' '))
+  if (await staff.locator('#walk-in-name').count() === 0) {
+    log('15 venda na hora (fora do horário do café):', await staff.getByText('Venda na hora:').innerText())
+  } else {
+    await staff.fill('#walk-in-name', 'Visitante'); await staff.fill('#walk-in-people', '2'); await staff.selectOption('#walk-in-method', 'cash')
+    await staff.getByRole('button', { name: 'Registrar venda' }).click(); await staff.waitForLoadState('networkidle')
+    log('15 venda na hora:', await flash(staff), '|', await staff.locator('article:has-text("Visitante") .card-description').innerText())
+  }
   for (const people of [10, 10, 1]) {
     await diego.goto(`${BASE}/cafe?hotel=2&data=${inDays(3)}&pessoas=${people}`)
     if (await diego.getByRole('button', { name: 'Reservar café da manhã' }).count() === 0) { log('14 lotação:', await flash(diego)); break }

@@ -28,6 +28,10 @@ final readonly class Hotel
         public int $breakfastStartHour = 6,
         public int $breakfastEndHour = 10,
         public int $breakfastDailyCapacity = 0,
+        /** Price for people who show up without booking; always higher than the regular price. */
+        public int $breakfastWalkInPriceCents = 0,
+        /** Estimated breakfast seats each occupied room takes (reservations do not store head count). */
+        public int $breakfastSeatsPerRoom = 2,
     ) {
     }
 
@@ -52,7 +56,15 @@ final readonly class Hotel
             (int) ($row['breakfast_start_hour'] ?? 6),
             (int) ($row['breakfast_end_hour'] ?? 10),
             (int) ($row['breakfast_daily_capacity'] ?? 0),
+            (int) ($row['breakfast_walk_in_price_cents'] ?? 0),
+            (int) ($row['breakfast_seats_per_room'] ?? 2),
         );
+    }
+
+    /** Walk-in sale only when the hotel set a price above the regular one. */
+    public function sellsWalkInBreakfast(): bool
+    {
+        return $this->sellsBreakfast() && $this->breakfastWalkInPriceCents > $this->breakfastPriceCents;
     }
 
     public function sellsBreakfast(): bool

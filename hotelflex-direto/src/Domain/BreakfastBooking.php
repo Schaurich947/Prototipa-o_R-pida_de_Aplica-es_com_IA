@@ -27,6 +27,7 @@ final readonly class BreakfastBooking
         public ?string $receiptOriginalName,
         public ?string $receiptMime,
         public ?string $rejectionReason,
+        public ?string $walkInName = null,
     ) {
     }
 
@@ -54,6 +55,7 @@ final readonly class BreakfastBooking
             $optional('receipt_original_name'),
             $optional('receipt_mime'),
             $optional('rejection_reason'),
+            $optional('walk_in_name'),
         );
     }
 

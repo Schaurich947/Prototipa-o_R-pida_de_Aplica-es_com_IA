@@ -79,7 +79,7 @@ composer install
 composer test
 ```
 
-São 53 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
+São 55 testes unitários: preço, disponibilidade, cobranças, sinal, período de datas, filtros, cancelamento, WhatsApp e mensagens.
 
 O teste de navegador cobre a jornada completa. Rode com o banco recém-criado:
 
@@ -126,4 +126,12 @@ Qualquer cliente cadastrado, hospedado ou não, pode reservar o café da manhã 
 - **via Pix antecipado:** 5% de desconto, com comprovante; sem comprovante no prazo, os lugares são liberados;
 - **no hotel:** sem desconto, em dinheiro, cartão ou Pix no balcão.
 
-Cada hotel define o preço por pessoa, o horário e o limite de lugares por dia. A reserva usa trava no banco, então o limite nunca é ultrapassado. Na tela **Café da manhã** do hotel, a recepção vê o dia, confere comprovantes, registra recebimentos no balcão e marca quem foi atendido.
+Cada hotel define o preço por pessoa, o horário e o limite de lugares por dia.
+
+**Hóspedes têm prioridade:** como a reserva não guarda quantas pessoas há no quarto, cada hotel define uma estimativa de lugares por quarto (ex.: 2). Para cada data, o sistema conta os quartos com hóspede naquela manhã (quem dormiu no hotel na noite anterior, inclusive no dia da saída):
+
+```
+lugares livres = capacidade − quartos com hóspede × lugares por quarto − cafés avulsos já reservados
+```
+
+**Venda na hora, sem reserva:** cada hotel define um preço de balcão, maior que o normal (ex.: R$ 55 contra R$ 45 reservando, ou R$ 42,75 com Pix antecipado). Os clientes veem esse aviso na tela do café. A recepção registra a venda em **Café da manhã**, só durante o horário do café e só se houver lugar livre. A reserva usa trava no banco, então o limite nunca é ultrapassado. Na tela **Café da manhã** do hotel, a recepção vê o dia, confere comprovantes, registra recebimentos no balcão e marca quem foi atendido.

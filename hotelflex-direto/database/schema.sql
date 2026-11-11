@@ -26,6 +26,9 @@ CREATE TABLE hotels (
     breakfast_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 6,
     breakfast_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 10,
     breakfast_daily_capacity SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    -- Preço para quem chega sem reserva (maior que o normal) e lugares estimados por quarto ocupado.
+    breakfast_walk_in_price_cents INT UNSIGNED NOT NULL DEFAULT 0,
+    breakfast_seats_per_room TINYINT UNSIGNED NOT NULL DEFAULT 2,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -149,7 +152,8 @@ CREATE TABLE breakfast_bookings (
     unit_price_cents INT UNSIGNED NOT NULL,
     discount_percent TINYINT UNSIGNED NOT NULL DEFAULT 0,
     total_cents INT UNSIGNED NOT NULL,
-    payment_option ENUM('pix', 'desk') NOT NULL,
+    payment_option ENUM('pix', 'desk', 'walk_in') NOT NULL,
+    walk_in_name VARCHAR(120) NULL,
     status ENUM('pending_payment', 'under_review', 'confirmed', 'served', 'cancelled', 'expired') NOT NULL,
     is_paid TINYINT(1) NOT NULL DEFAULT 0,
     paid_method ENUM('pix_receipt', 'cash', 'debit_card', 'credit_card', 'pix_desk') NULL,

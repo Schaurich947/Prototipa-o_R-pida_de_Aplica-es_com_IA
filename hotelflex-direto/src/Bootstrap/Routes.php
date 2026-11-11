@@ -56,6 +56,7 @@ final class Routes
         $router->post('/cafe/{id}/cancelar', $breakfast('cancel'), $guestRoles);
         $router->get('/cafe/{id}/arquivo', $breakfast('downloadReceipt'), Navigation::SIGNED_IN_ROLES);
         $router->get('/hotel/cafe', $breakfast('showHotelPage'), $hotelRoles);
+        $router->post('/hotel/cafe/balcao', $breakfast('sellWalkIn'), $hotelRoles);
         $router->post('/hotel/cafe/{id}', $breakfast('hotelAction'), $hotelRoles);
 
         $router->get('/perfil', $profile('show'), Navigation::SIGNED_IN_ROLES);

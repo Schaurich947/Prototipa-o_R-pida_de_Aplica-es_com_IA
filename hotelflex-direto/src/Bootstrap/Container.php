@@ -34,6 +34,7 @@ use HotelFlex\Repository\UserRepository;
 use HotelFlex\Service\AccessGuard;
 use HotelFlex\Service\AuthService;
 use HotelFlex\Service\BookingSearch;
+use HotelFlex\Service\BreakfastRowBuilder;
 use HotelFlex\Service\BreakfastService;
 use HotelFlex\Service\ChargeService;
 use HotelFlex\Service\GuestReservationsQuery;
@@ -164,7 +165,9 @@ final class Container
     /** Also used by the CLI worker. */
     public function breakfastService(): BreakfastService
     {
-        return new BreakfastService(new BreakfastRepository($this->connection), $this->hotels, $this->receipts, $this->notifier(), $this->transaction, $this->clock);
+        $bookings = new BreakfastRepository($this->connection);
+
+        return new BreakfastService($bookings, new BreakfastRowBuilder($bookings, $this->clock), $this->hotels, $this->reservations, $this->receipts, $this->notifier(), $this->transaction, $this->clock);
     }
 
     public function liveUpdateController(): LiveUpdateController

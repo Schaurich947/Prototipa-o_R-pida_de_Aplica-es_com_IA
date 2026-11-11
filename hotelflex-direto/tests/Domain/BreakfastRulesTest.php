@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace HotelFlex\Tests\Domain;
 
 use DateTimeImmutable;
+use HotelFlex\Domain\BreakfastAvailability;
 use HotelFlex\Domain\BreakfastBooking;
 use HotelFlex\Domain\BreakfastPaymentOption;
 use HotelFlex\Domain\BreakfastStatus;
+use HotelFlex\Domain\Hotel;
 use PHPUnit\Framework\TestCase;
 
 final class BreakfastRulesTest extends TestCase
@@ -48,5 +50,24 @@ final class BreakfastRulesTest extends TestCase
     private function booking(BreakfastPaymentOption $option, BreakfastStatus $status): BreakfastBooking
     {
         return new BreakfastBooking(1, 'CF-1', 1, 1, new DateTimeImmutable('2026-11-12'), 2, 4500, 0, 9000, $option, $status, false, null, null, null, null, null, null);
+    }
+
+    public function testHotelGuestsTakeSeatsBeforeStandaloneSales(): void
+    {
+        $availability = new BreakfastAvailability(40, 5, 2, 7);
+
+        $this->assertSame(10, $availability->guestSeats);
+        $this->assertSame(23, $availability->freeSeats);
+        $this->assertSame(0, (new BreakfastAvailability(10, 6, 2, 0))->freeSeats);
+    }
+
+    public function testWalkInIsSoldOnlyAboveTheRegularPrice(): void
+    {
+        $hotel = static fn (int $walkInCents) => new Hotel(1, 'H', 'SP', 14, 12, 8, 18, 1, 1, 'pix', null, 24, 48, 4500, 6, 10, 40, $walkInCents, 2);
+
+        $this->assertTrue($hotel(5500)->sellsWalkInBreakfast());
+        $this->assertFalse($hotel(4500)->sellsWalkInBreakfast());
+        $this->assertSame(11000, BreakfastPaymentOption::WalkIn->calculateTotal(5500, 2));
+        $this->assertNotContains(BreakfastPaymentOption::WalkIn, BreakfastPaymentOption::bookingOptions());
     }
 }

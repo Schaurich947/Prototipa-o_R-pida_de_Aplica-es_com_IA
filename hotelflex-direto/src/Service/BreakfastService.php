@@ -6,6 +6,7 @@ namespace HotelFlex\Service;
 
 use DateTimeImmutable;
 use HotelFlex\Database\TransactionRunner;
+use HotelFlex\Domain\BreakfastAvailability;
 use HotelFlex\Domain\BreakfastBooking;
 use HotelFlex\Domain\BreakfastPaymentOption;
 use HotelFlex\Domain\BreakfastStatus;
@@ -17,6 +18,7 @@ use HotelFlex\Domain\Role;
 use HotelFlex\Domain\User;
 use HotelFlex\Repository\BreakfastRepository;
 use HotelFlex\Repository\HotelRepository;
+use HotelFlex\Repository\ReservationRepository;
 
 /** Breakfast sold to anyone, guests or not, limited by the hotel's daily capacity. */
 final class BreakfastService
@@ -25,7 +27,9 @@ final class BreakfastService
 
     public function __construct(
         private readonly BreakfastRepository $bookings,
+        private readonly BreakfastRowBuilder $rows,
         private readonly HotelRepository $hotels,
+        private readonly ReservationRepository $reservations,
         private readonly ReceiptStorage $receipts,
         private readonly Notifier $notifier,
         private readonly TransactionRunner $transaction,
@@ -37,13 +41,13 @@ final class BreakfastService
     {
         $hotel = $this->getHotelSellingBreakfast($hotelId);
         $this->assertBookable($hotel, $date, $people);
+        if (!in_array($option, BreakfastPaymentOption::bookingOptions(), true)) {
+            throw new DomainException('Escolha a forma de pagamento.');
+        }
 
         return $this->transaction->run(function () use ($customer, $hotel, $date, $people, $option): int {
-            $seatsLeft = $hotel->breakfastDailyCapacity - $this->bookings->countSeatsTaken($hotel->id, $date);
-            if ($people > $seatsLeft) {
-                throw new DomainException($seatsLeft > 0 ? "Restam só {$seatsLeft} lugar(es) nesse dia." : 'Não há mais lugares nesse dia.');
-            }
-            $bookingId = $this->bookings->create($this->buildRow($customer, $hotel, $date, $people, $option));
+            $this->assertSeatsLeft($this->getAvailability($hotel, $date), $people);
+            $bookingId = $this->bookings->create($this->rows->build($customer, $hotel, $date, $people, $option));
             $booking = $this->getBooking($bookingId);
             $this->notifier->notifyUser($customer->id, BreakfastMessages::created($booking, $hotel));
             $this->notifier->notifyHotelStaffById($hotel->id, BreakfastMessages::forStaff($booking, $hotel, $customer->name));
@@ -125,9 +129,41 @@ final class BreakfastService
         return $expired;
     }
 
-    public function getSeatsLeft(Hotel $hotel, DateTimeImmutable $date): int
+    /** Sale at the counter on the day, at the higher walk-in price, only while seats are left. */
+    public function sellWalkIn(User $actor, int $hotelId, int $people, PaymentMethod $method, string $customerName): void
     {
-        return max(0, $hotel->breakfastDailyCapacity - $this->transaction->run(fn () => $this->bookings->countSeatsTaken($hotel->id, $date)));
+        $hotel = $this->getHotelSellingBreakfast($hotelId);
+        if (!$actor->canManageHotel($hotel->id) || !$hotel->sellsWalkInBreakfast()) {
+            throw new DomainException('Este hotel não vende café da manhã na hora.');
+        }
+        $today = $this->clock->now()->setTime(0, 0);
+        $this->assertBookable($hotel, $today, $people);
+        if (!in_array($method, PaymentMethod::deskMethods(), true)) {
+            throw new DomainException('Escolha como foi pago.');
+        }
+        $this->transaction->run(function () use ($actor, $hotel, $today, $people, $method, $customerName): void {
+            $this->assertSeatsLeft($this->getAvailability($hotel, $today), $people);
+            $row = $this->rows->build($actor, $hotel, $today, $people, BreakfastPaymentOption::WalkIn);
+            $this->bookings->create([...$row, 'status' => BreakfastStatus::Served->value, 'is_paid' => 1, 'paid_method' => $method->value, 'walk_in_name' => mb_substr(trim($customerName), 0, 120) ?: null]);
+        });
+    }
+
+    /** Hotel guests first (estimated seats per occupied room), then standalone bookings. */
+    public function getAvailability(Hotel $hotel, DateTimeImmutable $date): BreakfastAvailability
+    {
+        return $this->transaction->run(fn () => new BreakfastAvailability(
+            $hotel->breakfastDailyCapacity,
+            $this->reservations->countRoomsWithGuestsOn($hotel->id, $date),
+            $hotel->breakfastSeatsPerRoom,
+            $this->bookings->countSeatsTaken($hotel->id, $date),
+        ));
+    }
+
+    private function assertSeatsLeft(BreakfastAvailability $availability, int $people): void
+    {
+        if ($people > $availability->freeSeats) {
+            throw new DomainException($availability->freeSeats > 0 ? "Restam só {$availability->freeSeats} lugar(es) nesse dia." : 'Não há mais lugares nesse dia.');
+        }
     }
 
     /** Guests see their own bookings; admins see all. */
@@ -171,40 +207,8 @@ final class BreakfastService
         }
     }
 
-    /** @return array<string, mixed> */
-    private function buildRow(User $customer, Hotel $hotel, DateTimeImmutable $date, int $people, BreakfastPaymentOption $option): array
-    {
-        $now = $this->clock->now();
-        $startsAt = $date->setTime($hotel->breakfastStartHour, 0);
-        $dueAt = min($now->modify("+{$hotel->paymentDeadlineHours} hours"), $startsAt);
-
-        return [
-            'code' => $this->generateCode(),
-            'user_id' => $customer->id,
-            'hotel_id' => $hotel->id,
-            'breakfast_date' => $date->format('Y-m-d'),
-            'people' => $people,
-            'unit_price_cents' => $hotel->breakfastPriceCents,
-            'discount_percent' => $option->discountPercent(),
-            'total_cents' => $option->calculateTotal($hotel->breakfastPriceCents, $people),
-            'payment_option' => $option->value,
-            'status' => ($option === BreakfastPaymentOption::Pix ? BreakfastStatus::PendingPayment : BreakfastStatus::Confirmed)->value,
-            'due_at' => $option === BreakfastPaymentOption::Pix ? $dueAt->format('Y-m-d H:i:s') : null,
-            'created_at' => $now->format('Y-m-d H:i:s'),
-        ];
-    }
-
     private function getBooking(int $bookingId): BreakfastBooking
     {
         return $this->bookings->findById($bookingId) ?? throw new DomainException('Café não encontrado.');
-    }
-
-    private function generateCode(): string
-    {
-        do {
-            $code = 'CF-' . strtoupper(bin2hex(random_bytes(3)));
-        } while ($this->bookings->codeExists($code));
-
-        return $code;
     }
 }

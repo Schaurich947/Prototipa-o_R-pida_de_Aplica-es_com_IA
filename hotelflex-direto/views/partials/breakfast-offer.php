@@ -31,7 +31,7 @@ $isAvailable = $seatsLeft >= $people;
         <?php if (!$isAvailable): ?>
             <p class="alert alert-error">Não há lugares suficientes para <?= e($people) ?> pessoa(s) nesse dia. Tente outra data.</p>
         <?php else: ?>
-            <?php foreach (BreakfastPaymentOption::cases() as $option): ?>
+            <?php foreach (BreakfastPaymentOption::bookingOptions() as $option): ?>
                 <label class="flex items-start gap-3 rounded-lg border p-3 text-sm has-[:checked]:border-primary">
                     <input type="radio" name="payment_option" value="<?= e($option->value) ?>" class="mt-0.5 accent-primary" <?= $option === BreakfastPaymentOption::Pix ? 'checked' : '' ?> required>
                     <span class="flex-1">

@@ -47,6 +47,8 @@ use HotelFlex\Service\BreakfastService;
     <footer class="card-footer justify-end"><button type="submit" class="btn btn-primary">Ver disponibilidade</button></footer>
 </form>
 
+<?= $view->partial('breakfast-walk-in-notice', ['hotels' => $selectedHotel !== null ? [$selectedHotel] : $hotels]) ?>
+
 <?php if ($selectedHotel !== null && $selectedDate !== null && $seatsLeft !== null): ?>
     <?= $view->partial('breakfast-offer', ['hotel' => $selectedHotel, 'date' => $selectedDate, 'people' => $people, 'seatsLeft' => $seatsLeft]) ?>
 <?php endif; ?>

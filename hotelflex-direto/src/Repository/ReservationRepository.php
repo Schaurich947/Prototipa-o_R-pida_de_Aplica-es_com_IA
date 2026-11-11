@@ -116,6 +116,19 @@ final class ReservationRepository
         return $statement->rowCount() === 1;
     }
 
+    /** Rooms whose guests wake up in the hotel on that date (the night before was booked), checkout day included. */
+    public function countRoomsWithGuestsOn(int $hotelId, DateTimeImmutable $date): int
+    {
+        $statement = $this->connection->prepare(
+            "SELECT COUNT(*) FROM reservations res JOIN rooms ON rooms.id = res.room_id
+             WHERE rooms.hotel_id = :hotel_id AND res.status IN ('pending_payment', 'confirmed', 'checked_in')
+               AND res.check_in_date < :day AND DATE_ADD(res.check_in_date, INTERVAL res.nights DAY) >= :same_day",
+        );
+        $statement->execute(['hotel_id' => $hotelId, 'day' => $date->format('Y-m-d'), 'same_day' => $date->format('Y-m-d')]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function codeExists(string $code): bool
     {
         $statement = $this->connection->prepare('SELECT 1 FROM reservations WHERE code = :code');
