@@ -38,6 +38,7 @@ try {
         'approve' => $app->chargeService()->reviewReceipt($user($args[0]), (int) $args[1], true, ''),
         'breakfast' => $app->breakfastService()->book($user($args[0]), 1, new DateTimeImmutable($args[1]), (int) $args[2], BreakfastPaymentOption::Desk),
         'dispatch' => $app->dispatcher()->processDue(200),
+        'invoices' => $app->fiscal()->invoiceProcessor()->processDue(null, 100),
     };
     echo 'ok';
 } catch (DomainException $error) {

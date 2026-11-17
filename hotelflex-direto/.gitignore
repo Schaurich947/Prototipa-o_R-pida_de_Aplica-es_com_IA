@@ -4,5 +4,7 @@
 .phpunit.cache/
 /storage/receipts/*
 /storage/outbox/*
+/storage/fiscal/*
 !/storage/receipts/.gitkeep
+!/storage/fiscal/.gitkeep
 !/storage/outbox/.gitkeep

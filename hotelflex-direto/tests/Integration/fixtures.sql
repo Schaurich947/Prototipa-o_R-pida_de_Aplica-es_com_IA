@@ -20,3 +20,7 @@ INSERT INTO rooms (id, hotel_id, number, category, daily_rate_cents, hourly_rate
     (2, 1, '102', 'Standard',  32000, 5000, 'clean', NULL),
     (3, 1, '103', 'Luxo',      45000, 7000, 'clean', NULL),
     (4, 2, '01',  'Vista Mar', 38000, 6000, 'clean', NULL);
+
+-- Fiscal: só o Centro tem dados fiscais (ISS 5%, ICMS 18%, empresas de São Paulo retêm o ISS). O Mar Azul fica sem, de propósito.
+INSERT INTO hotel_fiscal_profiles (hotel_id, legal_name, cnpj, municipal_registration, state_registration, tax_regime, municipality_code, address, service_code, iss_rate_bp, icms_rate_bp, series, next_number, iss_withholding, allows_anonymous_consumer) VALUES
+    (1, 'HotelFlex Centro Hospedagem Ltda', '77888999000181', '1234567', '110042490114', 'presumido', '3550308', 'Rua da Consolação, 100 - São Paulo/SP', '09.01', 500, 1800, '1', 1, 'empresa-mesma-cidade', 1);

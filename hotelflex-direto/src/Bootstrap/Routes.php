@@ -72,6 +72,8 @@ final class Routes
         $router->post('/hospede/nova-reserva', $booking('book'), $guestRoles);
         $router->get('/hospede/nova-reserva/revisar', $booking('showReview'), $guestRoles);
 
+        FiscalRoutes::register($router, $container);
+
         $router->get('/api/versao', static fn () => $container->liveUpdateController()->showVersion(), Navigation::SIGNED_IN_ROLES);
     }
 }

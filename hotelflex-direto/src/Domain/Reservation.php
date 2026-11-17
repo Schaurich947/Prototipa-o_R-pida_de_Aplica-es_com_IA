@@ -20,6 +20,8 @@ final readonly class Reservation
         public ReservationStatus $status,
         public ?PaymentPlan $paymentPlan = null,
         public int $discountPercent = 0,
+        /** Who the invoice goes to (null = consumer not identified). */
+        public ?int $billingProfileId = null,
     ) {
     }
 
@@ -38,6 +40,7 @@ final readonly class Reservation
             ReservationStatus::from((string) $row['status']),
             ($row['payment_plan'] ?? null) !== null ? PaymentPlan::from((string) $row['payment_plan']) : null,
             (int) ($row['discount_percent'] ?? 0),
+            ($row['billing_profile_id'] ?? null) !== null ? (int) $row['billing_profile_id'] : null,
         );
     }
 

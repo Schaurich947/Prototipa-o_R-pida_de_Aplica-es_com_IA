@@ -70,11 +70,11 @@ final class ReservationRepository
         );
     }
 
-    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights, PaymentPlan $plan): int
+    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights, PaymentPlan $plan, ?int $billingProfileId = null): int
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO reservations (code, user_id, room_id, check_in_date, nights, payment_plan, discount_percent)
-             VALUES (:code, :user_id, :room_id, :check_in_date, :nights, :payment_plan, :discount_percent)',
+            'INSERT INTO reservations (code, user_id, room_id, check_in_date, nights, payment_plan, discount_percent, billing_profile_id)
+             VALUES (:code, :user_id, :room_id, :check_in_date, :nights, :payment_plan, :discount_percent, :billing_profile_id)',
         );
         $statement->execute([
             'code' => $code,
@@ -84,6 +84,7 @@ final class ReservationRepository
             'nights' => $nights,
             'payment_plan' => $plan->value,
             'discount_percent' => $plan->discountPercent(),
+            'billing_profile_id' => $billingProfileId,
         ]);
 
         return (int) $this->connection->lastInsertId();

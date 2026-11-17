@@ -14,6 +14,7 @@ use HotelFlex\Domain\ReservationStatus;
 use HotelFlex\Domain\Room;
 use HotelFlex\Domain\RoomStatus;
 use HotelFlex\Domain\User;
+use HotelFlex\Fiscal\Service\InvoiceRequester;
 use HotelFlex\Repository\ReservationRepository;
 use HotelFlex\Repository\RoomRepository;
 use HotelFlex\Repository\ServiceRequestRepository;
@@ -31,6 +32,7 @@ final class RoomService
         private readonly Notifier $notifier,
         private readonly TransactionRunner $transaction,
         private readonly Clock $clock,
+        private readonly InvoiceRequester $invoices,
     ) {
     }
 
@@ -83,6 +85,8 @@ final class RoomService
             $this->changeReservationStatus($reservation->id, ReservationStatus::CheckedIn, ReservationStatus::CheckedOut);
             $this->updateRoomStatus($room, RoomStatus::Dirty);
             $this->requests->cancelPendingForReservation($reservation->id, $this->clock->now());
+            // The service ends at check-out, so the invoice carries the final amount (extra hours, changes, credits).
+            $this->invoices->requestForReservation($reservation->id);
             $this->notifier->notifyGuest($this->stays->build($reservation), ReservationMessages::checkedOut($this->stays->build($reservation)));
         });
     }

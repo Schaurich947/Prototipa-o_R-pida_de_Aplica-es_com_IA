@@ -69,3 +69,31 @@ INSERT INTO breakfast_bookings (code, user_id, hotel_id, breakfast_date, people,
     ('CF-2001', 6, 1, CURDATE() + INTERVAL 1 DAY, 2, 4500, 5, 8550, 'pix',  'under_review', 0, NULL, NOW() + INTERVAL 12 HOUR, 'exemplo.pdf', 'pix-cafe-carla.pdf', 'application/pdf', NOW() - INTERVAL 1 HOUR),
     ('CF-2002', 8, 1, CURDATE() + INTERVAL 1 DAY, 3, 4500, 0, 13500, 'desk', 'confirmed',    0, NULL, NULL, NULL, NULL, NULL, NOW() - INTERVAL 2 HOUR),
     ('CF-2003', 4, 2, CURDATE() - INTERVAL 7 DAY, 1, 3800, 5, 3610,  'pix',  'served',       1, 'pix_receipt', NULL, 'exemplo.pdf', 'pix-cafe-ana.pdf', 'application/pdf', NOW() - INTERVAL 8 DAY);
+
+-- ===== Módulo fiscal (dados fictícios de SIMULAÇÃO) =====
+-- Centro: tem inscrição estadual (emite NFC-e do café) e empresas de São Paulo retêm o ISS.
+-- Mar Azul: sem inscrição estadual, então a NFC-e do café avulso é rejeitada até o cadastro.
+INSERT INTO hotel_fiscal_profiles (hotel_id, legal_name, cnpj, municipal_registration, state_registration, tax_regime, municipality_code, address, service_code, iss_rate_bp, icms_rate_bp, series, next_number, iss_withholding, allows_anonymous_consumer) VALUES
+    (1, 'HotelFlex Centro Hospedagem Ltda (simulação)', '77888999000181', '1234567', '110042490114', 'presumido', '3550308', 'Rua da Consolação, 100 - Centro - São Paulo/SP - CEP 01301-000', '09.01', 500, 1800, '1', 2, 'empresa-mesma-cidade', 1),
+    (2, 'Pousada Mar Azul Ltda ME (simulação)',         '98765000000187', '7654321', NULL,           'simples',   '4205407', 'Av. Beira-Mar Norte, 2000 - Centro - Florianópolis/SC - CEP 88015-000', '09.01', 300, 0, '1', 1, 'nunca', 1);
+
+-- Ana: nota em nome próprio (CPF) ou da empresa onde trabalha (CNPJ consultado na simulação). Bruno: CPF.
+INSERT INTO billing_profiles (id, user_id, kind, name, document, email, country, street, street_number, district, city, state, postal_code, municipality_code, company_status, company_is_simples, company_is_mei, lookup_source, looked_up_at, created_at) VALUES
+    (1, 4, 'proprio', 'Ana Souza',                    '39053344705',    'ana@hotelflex.test',        'BR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW() - INTERVAL 30 DAY),
+    (2, 4, 'empresa', 'Empresa Exemplo Viagens Ltda', '11222333000181', 'financeiro@exemplo.test',   'BR', 'Rua Exemplo', '100', 'Centro', 'São Paulo', 'SP', '01001000', '3550308', 'ATIVA', 0, 0, 'simulacao', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 30 DAY),
+    (3, 5, 'proprio', 'Bruno Lima',                   '11144477735',    'bruno@hotelflex.test',      'BR', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NOW() - INTERVAL 5 DAY);
+
+UPDATE reservations SET billing_profile_id = 1 WHERE id IN (1, 7);
+UPDATE reservations SET billing_profile_id = 2 WHERE id = 6;
+UPDATE reservations SET billing_profile_id = 3 WHERE id IN (2, 10);
+
+-- Nota já autorizada (estadia da Carla, consumidor não identificado) e duas na fila para a demonstração.
+INSERT INTO invoices (id, hotel_id, user_id, kind, service_type, source_type, source_id, status, series, number, dps_id, access_key, issuer, taker_name, description, amount_cents, iss_cents, iss_withheld, icms_cents, cbs_cents, ibs_cents, reform_informative, acquirer_credit, competence_date, issued_at, attempts, next_attempt_at, created_at) VALUES
+    (1, 1, 6, 'nfse', 'hospedagem', 'reserva', 9, 'authorized', '1', 1, 'DPS355030827788899900018100001000000000000001', 'SIMULACAO0A1B2C3D4E5F60718293A4B5C6D7E8F9012345678', 'simulacao', 'Consumidor não identificado', 'Hospedagem de Carla Mendes, quarto 102 (Luxo), 3 diária(s). Reserva HF-1009.', 135000, 6750, 0, 0, 1215, 135, 1, 0, CURDATE(), NOW() - INTERVAL 1 HOUR, 1, NOW(), NOW() - INTERVAL 1 HOUR);
+INSERT INTO invoices (hotel_id, user_id, kind, service_type, source_type, source_id, status, taker_name, taker_document_type, taker_document, taker_email, description, amount_cents, competence_date, next_attempt_at, created_at) VALUES
+    (2, 4, 'nfse', 'hospedagem',  'reserva', 7, 'pending', 'Ana Souza', 'cpf', '39053344705', 'ana@hotelflex.test', 'Hospedagem de Ana Souza, quarto 02 (Chalé), 2 diária(s). Reserva HF-1007.', 112000, CURDATE(), NOW(), NOW()),
+    (2, 4, 'nfce', 'alimentacao', 'cafe',    3, 'pending', 'Consumidor não identificado', NULL, NULL, NULL, 'Café da manhã para 1 pessoa(s). Pedido CF-2003.', 3610, CURDATE(), NOW(), NOW());
+INSERT INTO tax_ledger (hotel_id, invoice_id, tax, nature, amount_cents, competence_month, created_at) VALUES
+    (1, 1, 'iss', 'proprio',     6750, DATE_FORMAT(CURDATE(), '%Y-%m'), NOW()),
+    (1, 1, 'cbs', 'informativo', 1215, DATE_FORMAT(CURDATE(), '%Y-%m'), NOW()),
+    (1, 1, 'ibs', 'informativo',  135, DATE_FORMAT(CURDATE(), '%Y-%m'), NOW());

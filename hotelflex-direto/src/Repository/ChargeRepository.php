@@ -183,4 +183,13 @@ final class ChargeRepository
 
         return (int) $statement->fetchColumn();
     }
+
+    /** Credits owed or already returned to the guest. */
+    public function sumRefunds(int $reservationId): int
+    {
+        $statement = $this->connection->prepare("SELECT COALESCE(SUM(amount_cents), 0) FROM charges WHERE reservation_id = :id AND kind = 'refund' AND status IN ('refund_pending', 'refunded')");
+        $statement->execute(['id' => $reservationId]);
+
+        return (int) $statement->fetchColumn();
+    }
 }

@@ -69,6 +69,26 @@ final class ConcurrencyTest extends IntegrationTestCase
         $this->assertCount(60, glob($this->storageRoot . '/storage/outbox/*.eml'), 'Cada mensagem gera um único arquivo enviado');
     }
 
+    #[TestDox('3 workers emitem a mesma fila de 12 notas: cada nota sai uma vez, com números 1 a 12 sem repetir nem pular')]
+    public function testParallelInvoiceWorkersKeepNumberingSequential(): void
+    {
+        $insert = $this->db->prepare(
+            "INSERT INTO invoices (hotel_id, user_id, kind, service_type, source_type, source_id, taker_name, description, amount_cents, competence_date, next_attempt_at, created_at)
+             VALUES (1, 4, 'nfse', 'hospedagem', 'reserva', :source_id, 'Consumidor não identificado', 'Hospedagem de teste', 30400, '2026-12-01', '2026-12-01 09:00:00', '2026-12-01 09:00:00')",
+        );
+        for ($index = 1; $index <= 12; $index++) {
+            $insert->execute(['source_id' => $index]);
+        }
+
+        $this->runInParallel([['invoices'], ['invoices'], ['invoices']]);
+
+        $this->assertSame(12, $this->countRows("SELECT COUNT(*) FROM invoices WHERE status = 'authorized'"));
+        $this->assertSame(12, $this->countRows('SELECT COUNT(DISTINCT number) FROM invoices WHERE number BETWEEN 1 AND 12'));
+        $this->assertSame(13, $this->countRows('SELECT next_number FROM hotel_fiscal_profiles WHERE hotel_id = 1'));
+        $this->assertSame(12, $this->countRows("SELECT COUNT(*) FROM tax_ledger WHERE tax = 'iss'"), 'ISS lançado uma vez por nota');
+        $this->assertCount(12, glob($this->storageRoot . '/storage/fiscal/*.xml'));
+    }
+
     /** @param list<list<string>> $commands @return list<string> output of each process */
     private function runInParallel(array $commands): array
     {

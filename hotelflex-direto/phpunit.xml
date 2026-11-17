@@ -8,6 +8,7 @@
         <testsuite name="unit">
             <directory>tests/Domain</directory>
             <directory>tests/Service</directory>
+            <directory>tests/Fiscal</directory>
         </testsuite>
         <testsuite name="integration">
             <directory>tests/Integration</directory>
@@ -15,5 +16,7 @@
     </testsuites>
     <php>
         <ini name="date.timezone" value="America/Sao_Paulo"/>
+        <!-- Expected failures logged by the code under test (e.g. simulated outages) go to a file, not the report. -->
+        <ini name="error_log" value=".phpunit.cache/error.log"/>
     </php>
 </phpunit>

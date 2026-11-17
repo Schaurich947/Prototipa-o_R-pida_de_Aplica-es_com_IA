@@ -10,6 +10,9 @@ use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\PaymentMethod;
 use HotelFlex\Domain\Role;
+use HotelFlex\Fiscal\Domain\InvoiceSource;
+use HotelFlex\Fiscal\Service\BillingProfileService;
+use HotelFlex\Fiscal\Service\InvoiceService;
 use HotelFlex\Http\Auth;
 use HotelFlex\Http\ContextSelector;
 use HotelFlex\Http\HttpRequest;
@@ -36,6 +39,8 @@ final class BreakfastController
         private readonly ActionRunner $actions,
         private readonly View $view,
         private readonly Clock $clock,
+        private readonly BillingProfileService $billing,
+        private readonly InvoiceService $invoices,
     ) {
     }
 
@@ -56,6 +61,9 @@ final class BreakfastController
             'myBookings' => $this->bookings->findByUser($actor->id),
             'hotelsById' => array_column(array_map(static fn ($item) => ['id' => $item->id, 'hotel' => $item], $this->hotels->findAll()), 'hotel', 'id'),
             'minDate' => $this->clock->now()->format('Y-m-d'),
+            'billingProfiles' => $this->billing->listFor($actor),
+            'allowsAnonymous' => $hotel === null || $this->billing->allowsAnonymous($hotel->id),
+            'billingReturnPath' => '/cafe?' . http_build_query($request->query),
         ]);
     }
 
@@ -64,7 +72,9 @@ final class BreakfastController
         $actor = $this->auth->requireUser();
         $this->actions->run(function () use ($actor, $request): string {
             $option = BreakfastPaymentOption::tryFrom($request->getBodyString('payment_option')) ?? throw new DomainException('Escolha a forma de pagamento.');
-            $bookingId = $this->breakfast->book($actor, $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX), $request->requireBodyDate('date'), $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $option);
+            $hotelId = $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX);
+            $billingProfileId = $this->billing->resolveForPayment($actor, $hotelId, $request->getBodyString('billing_choice'));
+            $bookingId = $this->breakfast->book($actor, $hotelId, $request->requireBodyDate('date'), $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $option, $billingProfileId);
 
             return '/cafe/' . $bookingId;
         }, 'Café da manhã reservado!', '/cafe');
@@ -79,6 +89,8 @@ final class BreakfastController
             'booking' => $booking,
             'hotel' => $this->breakfast->getHotelSellingBreakfast($booking->hotelId),
             'canCancel' => $booking->isCancellableBy($this->clock->now(), $this->breakfast->getHotelSellingBreakfast($booking->hotelId)),
+            'invoices' => $this->invoices->findBySource(InvoiceSource::Breakfast, $booking->id),
+            'invoiceTakerDescription' => $this->billing->describeChoice($booking->billingProfileId),
         ]);
     }
 
@@ -124,7 +136,7 @@ final class BreakfastController
         $this->actions->run(function () use ($actor, $request): void {
             $method = PaymentMethod::tryFrom($request->getBodyString('method')) ?? throw new DomainException('Escolha como foi pago.');
             $hotelId = $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX);
-            $this->breakfast->sellWalkIn($actor, $hotelId, $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $method, $request->getBodyString('customer_name'));
+            $this->breakfast->sellWalkIn($actor, $hotelId, $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $method, $request->getBodyString('customer_name'), $request->getBodyString('customer_cpf'));
         }, 'Venda na hora registrada.', self::HOTEL_PATH);
     }
 

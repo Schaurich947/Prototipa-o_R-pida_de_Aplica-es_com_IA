@@ -3,7 +3,7 @@
 -- Valores monetários em centavos (INT) para evitar erros de arredondamento.
 
 SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS breakfast_bookings, notifications, charges, service_requests, reservations, rooms, users, hotels;
+DROP TABLE IF EXISTS tax_ledger, invoices, tax_rules, company_lookups, hotel_fiscal_profiles, breakfast_bookings, notifications, charges, service_requests, reservations, rooms, users, billing_profiles, hotels;
 SET FOREIGN_KEY_CHECKS = 1;
 
 CREATE TABLE hotels (
@@ -46,6 +46,36 @@ CREATE TABLE users (
     CONSTRAINT fk_users_hotel FOREIGN KEY (hotel_id) REFERENCES hotels (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Dados para a nota fiscal, escolhidos antes de cada pagamento. O tomador pode ser outra pessoa ou uma empresa.
+-- Dados pessoais (LGPD): base legal = cumprimento de obrigação legal (emissão de nota fiscal).
+CREATE TABLE billing_profiles (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    kind ENUM('proprio', 'outra-pessoa', 'empresa', 'estrangeiro') NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    document VARCHAR(20) NOT NULL,
+    email VARCHAR(190) NULL,
+    country CHAR(2) NOT NULL DEFAULT 'BR',
+    street VARCHAR(120) NULL,
+    street_number VARCHAR(20) NULL,
+    district VARCHAR(120) NULL,
+    city VARCHAR(120) NULL,
+    state CHAR(2) NULL,
+    postal_code CHAR(8) NULL,
+    municipality_code CHAR(7) NULL,
+    -- Resultado da consulta do CNPJ no momento do cadastro (só empresas).
+    company_status VARCHAR(20) NULL,
+    company_is_simples TINYINT(1) NULL,
+    company_is_mei TINYINT(1) NULL,
+    lookup_source VARCHAR(30) NULL,
+    looked_up_at DATETIME NULL,
+    -- Perfis removidos ficam arquivados: notas antigas guardam a própria cópia dos dados.
+    archived_at DATETIME NULL,
+    created_at DATETIME NOT NULL,
+    CONSTRAINT fk_billing_user FOREIGN KEY (user_id) REFERENCES users (id),
+    INDEX idx_billing_user (user_id, archived_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE rooms (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     hotel_id INT UNSIGNED NOT NULL,
@@ -73,10 +103,13 @@ CREATE TABLE reservations (
     -- Forma de pagamento escolhida e o desconto que ela dá nas diárias.
     payment_plan ENUM('integral', 'sinal', 'sinal-balcao') NULL,
     discount_percent TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    -- Para quem sai a nota fiscal (NULL = consumidor não identificado).
+    billing_profile_id INT UNSIGNED NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_reservations_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_reservations_room FOREIGN KEY (room_id) REFERENCES rooms (id),
+    CONSTRAINT fk_reservations_billing FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles (id),
     INDEX idx_reservations_room_dates (room_id, check_in_date),
     INDEX idx_reservations_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -162,9 +195,14 @@ CREATE TABLE breakfast_bookings (
     receipt_original_name VARCHAR(160) NULL,
     receipt_mime VARCHAR(40) NULL,
     rejection_reason VARCHAR(255) NULL,
+    billing_profile_id INT UNSIGNED NULL,
+    -- Venda na hora com "CPF na nota".
+    walk_in_document CHAR(11) NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_breakfast_billing FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles (id),
     CONSTRAINT fk_breakfast_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_breakfast_hotel FOREIGN KEY (hotel_id) REFERENCES hotels (id),
     INDEX idx_breakfast_hotel_date (hotel_id, breakfast_date, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

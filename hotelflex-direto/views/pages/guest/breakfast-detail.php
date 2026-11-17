@@ -8,6 +8,8 @@ use HotelFlex\Domain\BreakfastStatus;
  * @var HotelFlex\Domain\BreakfastBooking $booking
  * @var HotelFlex\Domain\Hotel $hotel
  * @var bool $canCancel
+ * @var list<HotelFlex\Fiscal\Domain\Invoice> $invoices
+ * @var string $invoiceTakerDescription
  */
 $details = [
     'Hotel' => "{$hotel->name} · {$hotel->city}",
@@ -64,3 +66,7 @@ $details = [
         </footer>
     <?php endif; ?>
 </section>
+
+<div class="max-w-2xl">
+    <?= $view->partial('invoice-list', ['invoices' => $invoices, 'takerDescription' => $invoiceTakerDescription, 'whenIssued' => 'pelo hotel quando o café for servido']) ?>
+</div>

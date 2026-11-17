@@ -28,6 +28,10 @@ final readonly class BreakfastBooking
         public ?string $receiptMime,
         public ?string $rejectionReason,
         public ?string $walkInName = null,
+        /** Who the invoice goes to (null = consumer not identified). */
+        public ?int $billingProfileId = null,
+        /** CPF given at the counter for a walk-in sale ("CPF na nota"). */
+        public ?string $walkInDocument = null,
     ) {
     }
 
@@ -56,6 +60,8 @@ final readonly class BreakfastBooking
             $optional('receipt_mime'),
             $optional('rejection_reason'),
             $optional('walk_in_name'),
+            ($row['billing_profile_id'] ?? null) !== null ? (int) $row['billing_profile_id'] : null,
+            $row['walk_in_document'] ?? null,
         );
     }
 

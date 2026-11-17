@@ -36,8 +36,12 @@ final class ReservationService
     ) {
     }
 
-    /** The guest must accept the cancellation policy shown on the review screen. */
-    public function book(User $guest, int $roomId, StayDates $dates, PaymentPlan $plan, bool $hasAcceptedPolicy): int
+    /**
+     * The guest must accept the cancellation policy shown on the review screen.
+     *
+     * @param int|null $billingProfileId who the invoice goes to, already checked by BillingProfileService (null = consumer not identified)
+     */
+    public function book(User $guest, int $roomId, StayDates $dates, PaymentPlan $plan, bool $hasAcceptedPolicy, ?int $billingProfileId = null): int
     {
         if (!$hasAcceptedPolicy) {
             throw new DomainException('Para reservar, confirme que leu a política de cancelamento.');
@@ -45,10 +49,10 @@ final class ReservationService
         $dates->assertValid($this->clock->now());
         $room = $this->rooms->findById($roomId) ?? throw new DomainException('Quarto não encontrado.');
 
-        return $this->transaction->run(function () use ($guest, $room, $dates, $plan): int {
+        return $this->transaction->run(function () use ($guest, $room, $dates, $plan, $billingProfileId): int {
             $this->rooms->lockForUpdate($room->id);
             $this->assertRoomIsFree($room, $dates, null);
-            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $dates->checkInDate, $dates->nights, $plan);
+            $reservationId = $this->reservations->create($this->generateCode(), $guest->id, $room->id, $dates->checkInDate, $dates->nights, $plan, $billingProfileId);
             $stay = $this->stays->build($this->reservations->findById($reservationId) ?? throw new DomainException('Reserva não encontrada.'));
             $charges = $this->charges->createBookingCharges($stay, $plan);
             $this->notifier->notifyGuest($stay, ReservationMessages::created($stay, $charges));

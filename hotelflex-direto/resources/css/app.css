@@ -111,4 +111,14 @@
   .alert { @apply rounded-lg border px-4 py-3 text-sm; }
   .alert-success { @apply border-success/40 bg-success/10; }
   .alert-error { @apply border-destructive/40 bg-destructive/10 text-destructive; }
+
+  .data-table { @apply w-full min-w-[640px] text-left text-sm; }
+  .data-table th { @apply border-b px-3 py-2 text-xs font-medium text-muted-foreground; }
+  .data-table td { @apply border-b px-3 py-2 align-top; }
+  .simulation-stamp { @apply rounded-lg border-2 border-dashed border-destructive px-4 py-2 text-center text-sm font-semibold tracking-wide text-destructive uppercase; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
 }

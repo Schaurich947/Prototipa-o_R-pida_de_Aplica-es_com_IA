@@ -16,6 +16,8 @@ use HotelFlex\Domain\ReservationStatus;
  * @var list<HotelFlex\Domain\Notification> $messages
  * @var bool $isRefundable
  * @var HotelFlex\Domain\User $currentUser
+ * @var list<HotelFlex\Fiscal\Domain\Invoice> $invoices
+ * @var string $invoiceTakerDescription
  */
 $reservation = $stay->reservation;
 $hasPending = static fn (RequestType $type): bool => array_filter(
@@ -100,6 +102,7 @@ $details = [
             <h2 class="text-base font-semibold">Valores</h2>
             <?= $view->partial('billing-summary', ['billing' => $stay->billing, 'nights' => $reservation->nights]) ?>
         </section>
+        <?= $view->partial('invoice-list', ['invoices' => $invoices, 'takerDescription' => $invoiceTakerDescription, 'whenIssued' => 'pelo hotel no check-out, com o valor final']) ?>
         <?php if ($isEditable): ?>
             <?= $view->partial('change-dates-card', ['stay' => $stay, 'old' => $old, 'minDate' => $today->format('Y-m-d')]) ?>
             <?php $cancelWarning = $isRefundable ? 'O valor pago será devolvido.' : 'Fora do prazo de cancelamento grátis: o valor pago não será devolvido.'; ?>

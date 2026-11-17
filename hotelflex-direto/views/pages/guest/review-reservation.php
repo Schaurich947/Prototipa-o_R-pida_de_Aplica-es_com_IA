@@ -12,6 +12,9 @@ use HotelFlex\Domain\PaymentPlan;
  * @var DateTimeImmutable $freeCancellationUntil
  * @var DateTimeImmutable $paymentDeadline
  * @var string $backUrl
+ * @var list<HotelFlex\Fiscal\Domain\BillingProfile> $billingProfiles
+ * @var bool $allowsAnonymous
+ * @var string $billingReturnPath
  */
 $details = [
     'Hotel' => "{$stay->hotel->name} · {$stay->hotel->city}",
@@ -55,6 +58,7 @@ $details = [
                 <p class="text-xs text-muted-foreground">Chave Pix do hotel: <span class="font-mono"><?= e($stay->hotel->pixKey) ?></span>. Sem o primeiro comprovante no prazo, a reserva expira.</p>
             </div>
         </fieldset>
+        <?= $view->partial('billing-choice', ['billingProfiles' => $billingProfiles, 'allowsAnonymous' => $allowsAnonymous, 'billingReturnPath' => $billingReturnPath]) ?>
     </div>
     <aside class="space-y-4">
         <?= $view->partial('billing-summary', ['billing' => $stay->billing, 'nights' => $dates->nights]) ?>

@@ -9,6 +9,9 @@ use HotelFlex\Domain\Clock;
 use HotelFlex\Domain\DomainException;
 use HotelFlex\Domain\RequestType;
 use HotelFlex\Domain\StayDates;
+use HotelFlex\Fiscal\Domain\InvoiceSource;
+use HotelFlex\Fiscal\Service\BillingProfileService;
+use HotelFlex\Fiscal\Service\InvoiceService;
 use HotelFlex\Http\Auth;
 use HotelFlex\Http\ContextSelector;
 use HotelFlex\Http\HttpRequest;
@@ -33,6 +36,8 @@ final class GuestReservationsController
         private readonly ActionRunner $actions,
         private readonly View $view,
         private readonly Clock $clock,
+        private readonly InvoiceService $invoices,
+        private readonly BillingProfileService $billing,
     ) {
     }
 
@@ -65,6 +70,8 @@ final class GuestReservationsController
             'isEditable' => $stay->reservation->isEditableBy($this->clock->now()),
             'old' => $this->session->pullOldInput(),
             'today' => $this->clock->now(),
+            'invoices' => $this->invoices->findBySource(InvoiceSource::Reservation, $stay->reservation->id),
+            'invoiceTakerDescription' => $this->billing->describeChoice($stay->reservation->billingProfileId),
         ]);
     }
 

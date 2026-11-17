@@ -32,7 +32,10 @@ Datas e conflitos de reserva
 | `ChargesTest` | Integração | Dinheiro certo até o centavo: desconto, sinal, diferenças, créditos, cancelamento, balcão |
 | `DeadlinesTest` | Integração | Limites exatos de tempo (1 min antes/depois): prazo do Pix, cancelamento, meia-noite, horário do café |
 | `SecurityTest` | Integração | Permissões entre hóspedes e hotéis, upload falso, CSRF, bloqueio de login |
-| `ConcurrencyTest` | Integração | Ações simultâneas de verdade (processos paralelos): reserva dupla, aprovação dupla, lotação, fila |
+| `ConcurrencyTest` | Integração | Ações simultâneas de verdade (processos paralelos): reserva dupla, aprovação dupla, lotação, filas de mensagens e de notas |
+| `tests/Fiscal` | Unitário | CPF e CNPJ (inclusive alfanumérico), cálculo de ISS, ICMS, CBS e IBS, retenção do ISS |
+| `FiscalBillingTest` | Integração | Dados para a nota antes do pagamento: escolha obrigatória, dados de outra pessoa, CNPJ baixado, consulta do CNPJ |
+| `FiscalInvoiceTest` | Integração | Emissão: valor final no check-out, tomador diferente, numeração, emissor fora do ar, resposta perdida, cancelamento, café |
 | `tests/Performance` | Volume | Tempo das telas principais com dezenas de milhares de registros |
 
 O relógio é controlado (`TestClock`): os testes "viajam" para prazos, meia-noite e horário do café sem esperar o tempo passar.

@@ -33,7 +33,8 @@ final class DatabaseInstaller
 
         $this->adminConnection->exec("USE `{$databaseName}`");
         $this->runSqlFile('schema.sql');
-        $messages[] = 'Tabelas criadas.';
+        $this->runSqlFile('schema-fiscal.sql');
+        $messages[] = 'Tabelas criadas (inclusive as do módulo fiscal).';
         if ($withSeed) {
             $this->runSqlFile('seed.sql');
             $messages[] = 'Dados de demonstração inseridos.';
