@@ -13,17 +13,14 @@ use HotelFlex\Fiscal\Domain\InvoiceTaker;
 use HotelFlex\Fiscal\Domain\TaxDocument;
 use HotelFlex\Fiscal\Lookup\CompanyLookup;
 use HotelFlex\Fiscal\Repository\BillingProfileRepository;
-use HotelFlex\Fiscal\Repository\HotelFiscalProfileRepository;
 
 /** The customer's invoice data, chosen before paying. The taker may be someone else or a company. */
 final class BillingProfileService
 {
-    public const ANONYMOUS_CHOICE = 'consumidor';
     private const MAX_PROFILES = 10;
 
     public function __construct(
         private readonly BillingProfileRepository $profiles,
-        private readonly HotelFiscalProfileRepository $fiscalProfiles,
         private readonly CompanyLookup $companies,
         private readonly BillingProfileInputParser $parser,
         private readonly Clock $clock,
@@ -44,7 +41,7 @@ final class BillingProfileService
         }
         $parsed = $this->parser->parse($owner, $input, fn (TaxDocument $cnpj) => $this->findActiveCompany($cnpj));
 
-        return $this->profiles->create($owner->id, $parsed->kind, $parsed->name, $parsed->document, $parsed->email, $parsed->address, $parsed->country, $parsed->company, $this->clock->now());
+        return $this->profiles->create($owner->id, $parsed->kind, $parsed->name, $parsed->document, $parsed->email, $parsed->address, $parsed->country, $parsed->company, $parsed->stateRegistration, $this->clock->now());
     }
 
     public function archive(User $owner, int $profileId): void
@@ -62,18 +59,12 @@ final class BillingProfileService
 
     /**
      * Validates the choice made on the payment screen. Server side: the radio button alone proves nothing.
-     *
-     * @return int|null the billing profile, or null for "consumer not identified"
+     * The hotel must issue an invoice for every sale, so no booking is finished without CPF, CNPJ or a foreign document.
      */
-    public function resolveForPayment(User $owner, int $hotelId, string $choice): ?int
+    public function resolveForPayment(User $owner, string $choice): int
     {
         if ($choice === '') {
-            throw new DomainException('Escolha em nome de quem sai a nota fiscal.');
-        }
-        if ($choice === self::ANONYMOUS_CHOICE) {
-            $this->assertAnonymousAllowed($hotelId);
-
-            return null;
+            throw new DomainException('Informe o CPF ou CNPJ para a nota fiscal: o hotel é obrigado a emiti-la.');
         }
         $profile = ctype_digit($choice) ? $this->profiles->findById((int) $choice) : null;
         $isOwnActive = $profile !== null && $profile->userId === $owner->id && in_array($profile->id, array_map(static fn ($item) => $item->id, $this->listFor($owner)), true);
@@ -89,19 +80,7 @@ final class BillingProfileService
     {
         $profile = $billingProfileId !== null ? $this->profiles->findById($billingProfileId) : null;
 
-        return $profile?->describe() ?? InvoiceTaker::ANONYMOUS_NAME;
-    }
-
-    public function allowsAnonymous(int $hotelId): bool
-    {
-        return $this->fiscalProfiles->findByHotel($hotelId)?->allowsAnonymousConsumer ?? true;
-    }
-
-    private function assertAnonymousAllowed(int $hotelId): void
-    {
-        if (!$this->allowsAnonymous($hotelId)) {
-            throw new DomainException('Este hotel exige CPF ou CNPJ na nota fiscal.');
-        }
+        return $profile?->describe() ?? InvoiceTaker::MISSING_NAME;
     }
 
     /** Irregular companies cannot be takers; a lookup outage does not block the customer. */

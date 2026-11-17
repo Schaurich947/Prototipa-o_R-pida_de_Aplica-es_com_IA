@@ -27,7 +27,10 @@ final class BillingProfileInputParser
         $company = $kind === BillingKind::Company ? $findCompany($document) : null;
         $address = $this->parseAddress($kind, $input, $company);
 
-        return new ParsedBillingProfile($kind, $this->parseName($kind, $owner, $input['name'] ?? '', $company), $document, $this->parseEmail($input['email'] ?? ''), $address, $this->parseCountry($kind, $input['country'] ?? ''), $company);
+        return new ParsedBillingProfile(
+            $kind, $this->parseName($kind, $owner, $input['name'] ?? '', $company), $document, $this->parseEmail($input['email'] ?? ''),
+            $address, $this->parseCountry($kind, $input['country'] ?? ''), $company, $this->parseStateRegistration($kind, $input['state_registration'] ?? ''),
+        );
     }
 
     private function parseDocument(BillingKind $kind, string $value): TaxDocument
@@ -63,6 +66,23 @@ final class BillingProfileInputParser
         }
 
         return $company?->address;
+    }
+
+    /** Only companies have a state registration; for a CPF the field must stay empty. */
+    private function parseStateRegistration(BillingKind $kind, string $value): ?string
+    {
+        $value = strtoupper((string) preg_replace('/[\s.\/-]/', '', $value));
+        if ($value === '') {
+            return null;
+        }
+        if ($kind !== BillingKind::Company) {
+            throw new DomainException('Inscrição estadual é só para empresa (CNPJ). Pessoa física não tem.');
+        }
+        if (!preg_match('/^(ISENTO|[0-9A-Z]{2,14})$/', $value)) {
+            throw new DomainException('Inscrição estadual inválida: use só números, ou ISENTO.');
+        }
+
+        return $value;
     }
 
     private function parseEmail(string $value): ?string

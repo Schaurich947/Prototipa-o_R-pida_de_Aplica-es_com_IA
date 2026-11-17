@@ -22,7 +22,7 @@ final class FiscalInvoiceTest extends FiscalTestCase
     public function testInvoiceIsQueuedAtCheckOutWithTheFinalAmount(): void
     {
         $staff = $this->user('recepcao.centro@hotelflex.test');
-        $reservationId = $this->app->reservationService()->book($this->user('ana@hotelflex.test'), 1, self::dates('2026-12-01', '2026-12-02'), \HotelFlex\Domain\PaymentPlan::Full, true);
+        $reservationId = $this->app->reservationService()->book($this->user('ana@hotelflex.test'), 1, self::dates('2026-12-01', '2026-12-02'), \HotelFlex\Domain\PaymentPlan::Full, true, self::BILLING_PROFILES['ana@hotelflex.test']);
         $this->payFirstCharge($reservationId);
         $this->app->roomService()->checkIn($staff, $reservationId);
         $this->app->roomService()->setFlexibleHours($staff, $reservationId, RequestType::LateCheckout, 2);
@@ -143,12 +143,25 @@ final class FiscalInvoiceTest extends FiscalTestCase
         $this->assertSame(1083, $this->invoicesOf($reservationId)[0]->taxes->issCents, 'ISS 3% de R$ 361,00');
     }
 
-    #[TestDox('Café servido gera NFC-e com ICMS; venda na hora com "CPF na nota" sai com o CPF')]
+    #[TestDox('Reserva antiga sem CPF/CNPJ (de antes da regra): a nota é rejeitada pedindo os dados, nunca sai sem tomador')]
+    public function testInvoiceWithoutTakerDocumentIsRejected(): void
+    {
+        $reservationId = $this->book('ana@hotelflex.test', 1, '2026-12-01', '2026-12-02');
+        $this->db->exec("UPDATE reservations SET billing_profile_id = NULL WHERE id = {$reservationId}");
+        $this->payFirstCharge($reservationId);
+        $this->app->roomService()->checkIn($this->user('recepcao.centro@hotelflex.test'), $reservationId);
+        $this->app->roomService()->checkOut($this->user('recepcao.centro@hotelflex.test'), $reservationId);
+
+        $this->assertSame(1, $this->processQueue()['rejected']);
+        $this->assertStringContainsString('sem CPF ou CNPJ', (string) $this->invoicesOf($reservationId)[0]->lastError);
+    }
+
+    #[TestDox('Café servido gera NFC-e com ICMS; venda na hora sai com o CPF informado no balcão')]
     public function testBreakfastIssuesConsumerInvoices(): void
     {
         $breakfast = $this->app->breakfastService();
         $staff = $this->user('recepcao.centro@hotelflex.test');
-        $bookingId = $breakfast->book($this->user('carla@hotelflex.test'), 1, new \DateTimeImmutable('2026-12-02'), 2, \HotelFlex\Domain\BreakfastPaymentOption::Desk);
+        $bookingId = $breakfast->book($this->user('carla@hotelflex.test'), 1, new \DateTimeImmutable('2026-12-02'), 2, \HotelFlex\Domain\BreakfastPaymentOption::Desk, self::BILLING_PROFILES['carla@hotelflex.test']);
         $breakfast->receiveAtDesk($staff, $bookingId, PaymentMethod::Cash);
         $this->clock->travelTo('2026-12-02 08:00:00');
         $breakfast->markServed($staff, $bookingId);

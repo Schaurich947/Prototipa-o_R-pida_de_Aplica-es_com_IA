@@ -56,7 +56,6 @@ final class HotelFiscalService
             self::parseRate(($input['icms_rate'] ?? '') !== '' ? $input['icms_rate'] : '0', 0, self::MAX_ICMS_BP, 'Alíquota de ICMS inválida.'),
             self::requirePattern($input['series'] ?? '', '/^\d{1,5}$/', 'A série tem de 1 a 5 números.'),
             IssWithholdingRule::tryFrom($input['iss_withholding'] ?? '') ?? throw new DomainException('Escolha a regra de retenção do ISS.'),
-            ($input['allows_anonymous_consumer'] ?? '') === '1',
         ));
     }
 

@@ -20,14 +20,14 @@
     <section class="space-y-3">
         <h2 class="text-base font-semibold">Meus cadastros</h2>
         <?php if ($profiles === []): ?>
-            <?= $view->partial('empty-state', ['message' => 'Nenhum cadastro ainda. Sem cadastro, a nota sai como "consumidor não identificado".']) ?>
+            <?= $view->partial('empty-state', ['message' => 'Nenhum cadastro ainda. Cadastre ao menos o seu CPF: sem ele não é possível reservar, porque o hotel é obrigado a emitir a nota.']) ?>
         <?php endif; ?>
         <?php foreach ($profiles as $profile): ?>
             <article class="card py-3">
                 <div class="card-content flex-row items-start justify-between px-3">
                     <div class="space-y-0.5">
                         <p class="font-medium"><?= e($profile->name) ?></p>
-                        <p class="text-muted-foreground"><?= e($profile->kind->label()) ?> · <?= e($profile->document->mask()) ?></p>
+                        <p class="text-muted-foreground"><?= e($profile->kind->label()) ?> · <?= e($profile->document->mask()) ?><?= $profile->stateRegistration !== null ? ' · IE ' . e($profile->stateRegistration) : '' ?></p>
                         <?php if ($profile->company !== null): ?>
                             <p class="text-xs text-muted-foreground">Receita: <?= e($profile->company->status) ?> · <?= e($profile->company->describeRegime()) ?> · consultado em <?= e(formatDate($profile->company->lookedUpAt)) ?></p>
                         <?php endif; ?>

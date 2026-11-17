@@ -63,6 +63,8 @@ CREATE TABLE billing_profiles (
     state CHAR(2) NULL,
     postal_code CHAR(8) NULL,
     municipality_code CHAR(7) NULL,
+    -- Inscrição estadual: só empresas (CNPJ) têm; pessoa física nunca.
+    state_registration VARCHAR(20) NULL,
     -- Resultado da consulta do CNPJ no momento do cadastro (só empresas).
     company_status VARCHAR(20) NULL,
     company_is_simples TINYINT(1) NULL,
@@ -103,7 +105,7 @@ CREATE TABLE reservations (
     -- Forma de pagamento escolhida e o desconto que ela dá nas diárias.
     payment_plan ENUM('integral', 'sinal', 'sinal-balcao') NULL,
     discount_percent TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    -- Para quem sai a nota fiscal (NULL = consumidor não identificado).
+    -- Para quem sai a nota fiscal: obrigatório em toda reserva nova (CPF, CNPJ ou documento estrangeiro).
     billing_profile_id INT UNSIGNED NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
@@ -196,8 +198,8 @@ CREATE TABLE breakfast_bookings (
     receipt_mime VARCHAR(40) NULL,
     rejection_reason VARCHAR(255) NULL,
     billing_profile_id INT UNSIGNED NULL,
-    -- Venda na hora com "CPF na nota".
-    walk_in_document CHAR(11) NULL,
+    -- Venda na hora: CPF ou CNPJ obrigatório para a nota.
+    walk_in_document VARCHAR(14) NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_breakfast_billing FOREIGN KEY (billing_profile_id) REFERENCES billing_profiles (id),

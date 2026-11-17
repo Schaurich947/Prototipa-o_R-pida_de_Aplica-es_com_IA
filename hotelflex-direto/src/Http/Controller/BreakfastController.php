@@ -62,7 +62,6 @@ final class BreakfastController
             'hotelsById' => array_column(array_map(static fn ($item) => ['id' => $item->id, 'hotel' => $item], $this->hotels->findAll()), 'hotel', 'id'),
             'minDate' => $this->clock->now()->format('Y-m-d'),
             'billingProfiles' => $this->billing->listFor($actor),
-            'allowsAnonymous' => $hotel === null || $this->billing->allowsAnonymous($hotel->id),
             'billingReturnPath' => '/cafe?' . http_build_query($request->query),
         ]);
     }
@@ -72,9 +71,8 @@ final class BreakfastController
         $actor = $this->auth->requireUser();
         $this->actions->run(function () use ($actor, $request): string {
             $option = BreakfastPaymentOption::tryFrom($request->getBodyString('payment_option')) ?? throw new DomainException('Escolha a forma de pagamento.');
-            $hotelId = $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX);
-            $billingProfileId = $this->billing->resolveForPayment($actor, $hotelId, $request->getBodyString('billing_choice'));
-            $bookingId = $this->breakfast->book($actor, $hotelId, $request->requireBodyDate('date'), $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $option, $billingProfileId);
+            $billingProfileId = $this->billing->resolveForPayment($actor, $request->getBodyString('billing_choice'));
+            $bookingId = $this->breakfast->book($actor, $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX), $request->requireBodyDate('date'), $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $option, $billingProfileId);
 
             return '/cafe/' . $bookingId;
         }, 'Café da manhã reservado!', '/cafe');
@@ -136,7 +134,7 @@ final class BreakfastController
         $this->actions->run(function () use ($actor, $request): void {
             $method = PaymentMethod::tryFrom($request->getBodyString('method')) ?? throw new DomainException('Escolha como foi pago.');
             $hotelId = $request->requireBodyInt('hotel_id', 1, PHP_INT_MAX);
-            $this->breakfast->sellWalkIn($actor, $hotelId, $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $method, $request->getBodyString('customer_name'), $request->getBodyString('customer_cpf'));
+            $this->breakfast->sellWalkIn($actor, $hotelId, $request->requireBodyInt('people', 1, BreakfastService::MAX_PEOPLE), $method, $request->getBodyString('customer_name'), $request->getBodyString('customer_document'));
         }, 'Venda na hora registrada.', self::HOTEL_PATH);
     }
 

@@ -20,6 +20,8 @@ final readonly class BillingProfile
         public string $country,
         /** Snapshot of the CNPJ lookup when the profile was saved (company only). */
         public ?CompanyRecord $company = null,
+        /** Companies only (or ISENTO); a person never has a state registration. */
+        public ?string $stateRegistration = null,
     ) {
     }
 
@@ -38,6 +40,7 @@ final readonly class BillingProfile
             BillingAddress::fromRow($row),
             (string) $row['country'],
             $row['company_status'] !== null ? CompanyRecord::fromProfileRow($row) : null,
+            ($row['state_registration'] ?? null) !== null ? (string) $row['state_registration'] : null,
         );
     }
 

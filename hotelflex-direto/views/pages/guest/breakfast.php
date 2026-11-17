@@ -14,7 +14,6 @@ use HotelFlex\Service\BreakfastService;
  * @var array<int, HotelFlex\Domain\Hotel> $hotelsById
  * @var string $minDate
  * @var list<HotelFlex\Fiscal\Domain\BillingProfile> $billingProfiles
- * @var bool $allowsAnonymous
  * @var string $billingReturnPath
  */
 ?>
@@ -55,7 +54,7 @@ use HotelFlex\Service\BreakfastService;
 <?php if ($selectedHotel !== null && $selectedDate !== null && $seatsLeft !== null): ?>
     <?= $view->partial('breakfast-offer', [
         'hotel' => $selectedHotel, 'date' => $selectedDate, 'people' => $people, 'seatsLeft' => $seatsLeft,
-        'billingProfiles' => $billingProfiles, 'allowsAnonymous' => $allowsAnonymous, 'billingReturnPath' => $billingReturnPath,
+        'billingProfiles' => $billingProfiles, 'billingReturnPath' => $billingReturnPath,
     ]) ?>
 <?php endif; ?>
 

@@ -73,8 +73,8 @@ final class ConcurrencyTest extends IntegrationTestCase
     public function testParallelInvoiceWorkersKeepNumberingSequential(): void
     {
         $insert = $this->db->prepare(
-            "INSERT INTO invoices (hotel_id, user_id, kind, service_type, source_type, source_id, taker_name, description, amount_cents, competence_date, next_attempt_at, created_at)
-             VALUES (1, 4, 'nfse', 'hospedagem', 'reserva', :source_id, 'Consumidor não identificado', 'Hospedagem de teste', 30400, '2026-12-01', '2026-12-01 09:00:00', '2026-12-01 09:00:00')",
+            "INSERT INTO invoices (hotel_id, user_id, kind, service_type, source_type, source_id, taker_name, taker_document_type, taker_document, description, amount_cents, competence_date, next_attempt_at, created_at)
+             VALUES (1, 4, 'nfse', 'hospedagem', 'reserva', :source_id, 'Ana Souza', 'cpf', '39053344705', 'Hospedagem de teste', 30400, '2026-12-01', '2026-12-01 09:00:00', '2026-12-01 09:00:00')",
         );
         for ($index = 1; $index <= 12; $index++) {
             $insert->execute(['source_id' => $index]);

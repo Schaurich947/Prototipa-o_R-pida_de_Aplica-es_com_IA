@@ -50,7 +50,7 @@ final class InvoiceRequester
         return $this->create(ServiceType::Lodging, InvoiceSource::Reservation, $reservationId, $stay->hotel->id, $reservation->userId, $this->resolveTaker($reservation->billingProfileId), $description, $amountCents);
     }
 
-    /** @param InvoiceTaker|null $counterTaker "CPF na nota" typed by the reception for a walk-in sale */
+    /** @param InvoiceTaker|null $counterTaker CPF or CNPJ typed by the reception for a walk-in sale */
     public function requestForBreakfast(BreakfastBooking $booking, ?InvoiceTaker $counterTaker = null): ?int
     {
         if (!$booking->isPaid || $this->hasActiveInvoice(InvoiceSource::Breakfast, $booking->id)) {
@@ -66,7 +66,7 @@ final class InvoiceRequester
     {
         $profile = $billingProfileId !== null ? $this->profiles->findById($billingProfileId) : null;
 
-        return $profile !== null ? InvoiceTaker::fromProfile($profile) : InvoiceTaker::anonymous();
+        return $profile !== null ? InvoiceTaker::fromProfile($profile) : InvoiceTaker::missing();
     }
 
     private function hasActiveInvoice(InvoiceSource $source, int $sourceId): bool
@@ -89,7 +89,7 @@ final class InvoiceRequester
             'source_type' => $source->value, 'source_id' => $sourceId, 'status' => InvoiceStatus::Pending->value,
             'taker_name' => $taker->name, 'taker_document_type' => $taker->document?->type->value, 'taker_document' => $taker->document?->value,
             'taker_email' => $taker->email, 'taker_address' => $taker->address, 'taker_municipality_code' => $taker->municipalityCode,
-            'taker_is_simples' => $taker->isSimples === null ? null : (int) $taker->isSimples,
+            'taker_is_simples' => $taker->isSimples === null ? null : (int) $taker->isSimples, 'taker_state_registration' => $taker->stateRegistration,
             'description' => mb_substr($description, 0, 500), 'amount_cents' => $amountCents,
             'competence_date' => $this->clock->now()->format('Y-m-d'), 'next_attempt_at' => $now, 'created_at' => $now,
         ]);

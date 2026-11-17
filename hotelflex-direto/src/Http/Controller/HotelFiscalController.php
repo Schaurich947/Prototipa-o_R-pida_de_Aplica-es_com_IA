@@ -16,7 +16,7 @@ use HotelFlex\View\View;
 final class HotelFiscalController
 {
     private const PATH = '/hotel/fiscal';
-    private const FORM_FIELDS = ['legal_name', 'cnpj', 'municipal_registration', 'state_registration', 'tax_regime', 'municipality_code', 'address', 'service_code', 'iss_rate', 'icms_rate', 'series', 'iss_withholding', 'allows_anonymous_consumer'];
+    private const FORM_FIELDS = ['legal_name', 'cnpj', 'municipal_registration', 'state_registration', 'tax_regime', 'municipality_code', 'address', 'service_code', 'iss_rate', 'icms_rate', 'series', 'iss_withholding'];
 
     public function __construct(
         private readonly Auth $auth,

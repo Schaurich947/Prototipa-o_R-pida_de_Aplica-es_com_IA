@@ -75,7 +75,6 @@ final class BookingController
             'freeCancellationUntil' => CancellationPolicy::getFreeCancellationDeadline($stay->hotel, $stay->reservation),
             'paymentDeadline' => $this->clock->now()->modify("+{$stay->hotel->paymentDeadlineHours} hours"),
             'billingProfiles' => $this->billing->listFor($guest),
-            'allowsAnonymous' => $this->billing->allowsAnonymous($stay->hotel->id),
             'billingReturnPath' => self::SEARCH_PATH . '/revisar?' . http_build_query(['quarto' => $stay->room->id, 'entrada' => $dates->checkInDate->format('Y-m-d'), 'saida' => $dates->checkOutDate->format('Y-m-d')]),
             'backUrl' => url(self::SEARCH_PATH . '?' . http_build_query(['entrada' => $dates->checkInDate->format('Y-m-d'), 'saida' => $dates->checkOutDate->format('Y-m-d')])),
         ]);
@@ -91,10 +90,8 @@ final class BookingController
         $this->actions->run(function () use ($guest, $request): string {
             $dates = new StayDates($request->requireBodyDate('check_in_date'), $request->requireBodyDate('check_out_date'));
             $plan = PaymentPlan::tryFrom($request->getBodyString('payment_plan')) ?? throw new DomainException('Escolha a forma de pagamento.');
-            $roomId = $request->requireBodyInt('room_id', 1, PHP_INT_MAX);
-            $hotelId = $this->search->buildPreview($guest, $roomId, $dates)->hotel->id;
-            $billingProfileId = $this->billing->resolveForPayment($guest, $hotelId, $request->getBodyString('billing_choice'));
-            $reservationId = $this->reservationService->book($guest, $roomId, $dates, $plan, ($request->body['accept_policy'] ?? '') === '1', $billingProfileId);
+            $billingProfileId = $this->billing->resolveForPayment($guest, $request->getBodyString('billing_choice'));
+            $reservationId = $this->reservationService->book($guest, $request->requireBodyInt('room_id', 1, PHP_INT_MAX), $dates, $plan, ($request->body['accept_policy'] ?? '') === '1', $billingProfileId);
 
             return '/hospede/reservas/' . $reservationId;
         }, 'Reserva criada! Pague via Pix e envie o comprovante para confirmar.', $backToReview);

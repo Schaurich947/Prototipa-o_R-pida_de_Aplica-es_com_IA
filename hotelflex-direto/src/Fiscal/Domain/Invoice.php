@@ -72,6 +72,7 @@ final readonly class Invoice
             $row['taker_address'] !== null ? (string) $row['taker_address'] : null,
             $row['taker_municipality_code'] !== null ? (string) $row['taker_municipality_code'] : null,
             $row['taker_is_simples'] !== null ? (bool) $row['taker_is_simples'] : null,
+            $row['taker_state_registration'] !== null ? (string) $row['taker_state_registration'] : null,
         );
     }
 

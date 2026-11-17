@@ -54,7 +54,7 @@ $taxRows = [
             <div>
                 <h2 class="text-xs font-medium text-muted-foreground uppercase">Tomador</h2>
                 <p class="font-medium"><?= e($invoice->taker->name) ?></p>
-                <p><?= e($invoice->taker->describeDocument()) ?></p>
+                <p><?= e($invoice->taker->describeDocument()) ?><?= $invoice->taker->stateRegistration !== null ? ' · IE ' . e($invoice->taker->stateRegistration) : '' ?></p>
                 <p class="text-muted-foreground"><?= e($invoice->taker->address ?? '') ?></p>
             </div>
         </section>

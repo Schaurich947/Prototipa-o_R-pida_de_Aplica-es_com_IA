@@ -27,20 +27,20 @@ final class HotelFiscalProfileRepository
     {
         $statement = $this->connection->prepare(
             'INSERT INTO hotel_fiscal_profiles (hotel_id, legal_name, cnpj, municipal_registration, state_registration, tax_regime, municipality_code, address,
-                service_code, iss_rate_bp, icms_rate_bp, series, iss_withholding, allows_anonymous_consumer)
+                service_code, iss_rate_bp, icms_rate_bp, series, iss_withholding)
              VALUES (:hotel_id, :legal_name, :cnpj, :municipal_registration, :state_registration, :tax_regime, :municipality_code, :address,
-                :service_code, :iss_rate_bp, :icms_rate_bp, :series, :iss_withholding, :allows_anonymous_consumer)
+                :service_code, :iss_rate_bp, :icms_rate_bp, :series, :iss_withholding)
              ON DUPLICATE KEY UPDATE legal_name = VALUES(legal_name), cnpj = VALUES(cnpj), municipal_registration = VALUES(municipal_registration),
                 state_registration = VALUES(state_registration), tax_regime = VALUES(tax_regime), municipality_code = VALUES(municipality_code),
                 address = VALUES(address), service_code = VALUES(service_code), iss_rate_bp = VALUES(iss_rate_bp), icms_rate_bp = VALUES(icms_rate_bp),
-                series = VALUES(series), iss_withholding = VALUES(iss_withholding), allows_anonymous_consumer = VALUES(allows_anonymous_consumer)',
+                series = VALUES(series), iss_withholding = VALUES(iss_withholding)',
         );
         $statement->execute([
             'hotel_id' => $profile->hotelId, 'legal_name' => $profile->legalName, 'cnpj' => $profile->cnpj->value,
             'municipal_registration' => $profile->municipalRegistration, 'state_registration' => $profile->stateRegistration,
             'tax_regime' => $profile->taxRegime->value, 'municipality_code' => $profile->municipalityCode, 'address' => $profile->address,
             'service_code' => $profile->serviceCode, 'iss_rate_bp' => $profile->issRateBasisPoints, 'icms_rate_bp' => $profile->icmsRateBasisPoints,
-            'series' => $profile->series, 'iss_withholding' => $profile->issWithholding->value, 'allows_anonymous_consumer' => (int) $profile->allowsAnonymousConsumer,
+            'series' => $profile->series, 'iss_withholding' => $profile->issWithholding->value,
         ]);
     }
 

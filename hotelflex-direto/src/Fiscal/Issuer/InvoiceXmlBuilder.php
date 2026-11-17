@@ -55,6 +55,9 @@ final class InvoiceXmlBuilder
             $this->append($document, $element, strtoupper($taker->document->type->value === 'estrangeiro' ? 'NIF' : $taker->document->type->value), $taker->document->value);
         }
         $this->append($document, $element, 'xNome', $taker->name);
+        if ($taker->stateRegistration !== null) {
+            $this->append($document, $element, 'IE', $taker->stateRegistration);
+        }
         if ($taker->address !== null) {
             $this->append($document, $element, 'end', $taker->address);
         }

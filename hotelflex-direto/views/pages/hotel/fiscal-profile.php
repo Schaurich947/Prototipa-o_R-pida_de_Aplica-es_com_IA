@@ -21,7 +21,7 @@ $current = [
 $value = static fn (string $key): string => (string) ($old[$key] ?? $current[$key] ?? '');
 $textFields = [
     ['legal_name', 'Razão social', 'sm:col-span-2'], ['cnpj', 'CNPJ', ''], ['municipal_registration', 'Inscrição municipal', ''],
-    ['state_registration', 'Inscrição estadual (para NFC-e do café)', ''], ['municipality_code', 'Código IBGE do município', ''],
+    ['state_registration', 'Inscrição estadual do hotel (só para NFC-e do café)', ''], ['municipality_code', 'Código IBGE do município', ''],
     ['address', 'Endereço do estabelecimento', 'sm:col-span-2'], ['service_code', 'Código do serviço (LC 116: 09.01)', ''],
     ['iss_rate', 'Alíquota de ISS (%)', ''], ['icms_rate', 'Alíquota de ICMS no café (%)', ''], ['series', 'Série das notas', ''],
 ];
@@ -67,10 +67,7 @@ $hotelPicker = renderIf($hotelOptions !== [], fn () => $view->partial('select-pi
                 </select>
             </div>
         </div>
-        <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="allows_anonymous_consumer" value="1" class="accent-primary" <?= ($profile?->allowsAnonymousConsumer ?? true) ? 'checked' : '' ?>>
-            Aceitar nota para "consumidor não identificado" (pessoa física sem CPF)
-        </label>
+        <p class="text-xs text-muted-foreground">Toda nota exige CPF ou CNPJ do tomador (ou documento estrangeiro). A inscrição estadual acima é a do hotel, exigida pela SEFAZ só para emitir a NFC-e do café.</p>
     </fieldset>
     <footer class="card-footer justify-between">
         <p class="text-xs text-muted-foreground">Certificado digital: fica fora do sistema nesta fase (emissão simulada).</p>

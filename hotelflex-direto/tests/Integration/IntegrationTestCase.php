@@ -84,9 +84,12 @@ abstract class IntegrationTestCase extends TestCase
         return new StayDates(new DateTimeImmutable($checkIn), new DateTimeImmutable($checkOut));
     }
 
+    /** Guests of the fixtures have their own CPF profile (ids 1 to 3), mandatory to book. */
+    public const BILLING_PROFILES = ['ana@hotelflex.test' => 1, 'bruno@hotelflex.test' => 2, 'carla@hotelflex.test' => 3];
+
     protected function book(string $guestEmail, int $roomId, string $checkIn, string $checkOut, PaymentPlan $plan = PaymentPlan::Full): int
     {
-        return $this->app->reservationService()->book($this->user($guestEmail), $roomId, self::dates($checkIn, $checkOut), $plan, true);
+        return $this->app->reservationService()->book($this->user($guestEmail), $roomId, self::dates($checkIn, $checkOut), $plan, true, self::BILLING_PROFILES[$guestEmail]);
     }
 
     /** The guest's receipt arrives (as the upload would store it) and the hotel approves it. */

@@ -39,9 +39,9 @@ final class ReservationService
     /**
      * The guest must accept the cancellation policy shown on the review screen.
      *
-     * @param int|null $billingProfileId who the invoice goes to, already checked by BillingProfileService (null = consumer not identified)
+     * @param int $billingProfileId who the invoice goes to (CPF, CNPJ or foreign document), already checked by BillingProfileService
      */
-    public function book(User $guest, int $roomId, StayDates $dates, PaymentPlan $plan, bool $hasAcceptedPolicy, ?int $billingProfileId = null): int
+    public function book(User $guest, int $roomId, StayDates $dates, PaymentPlan $plan, bool $hasAcceptedPolicy, int $billingProfileId): int
     {
         if (!$hasAcceptedPolicy) {
             throw new DomainException('Para reservar, confirme que leu a política de cancelamento.');

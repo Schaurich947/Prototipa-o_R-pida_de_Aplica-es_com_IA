@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HotelFlex\Tests\Integration;
 
 use HotelFlex\Domain\DomainException;
-use HotelFlex\Fiscal\Service\BillingProfileService;
+use HotelFlex\Fiscal\Domain\BillingProfile;
 use PHPUnit\Framework\Attributes\TestDox;
 
 /**
@@ -20,9 +20,9 @@ final class FiscalBillingTest extends FiscalTestCase
     #[TestDox('Pagar sem escolher em nome de quem sai a nota é recusado (validação no servidor)')]
     public function testPaymentRequiresABillingChoice(): void
     {
-        $this->expectExceptionMessage('Escolha em nome de quem sai a nota fiscal.');
+        $this->expectExceptionMessage('Informe o CPF ou CNPJ para a nota fiscal: o hotel é obrigado a emiti-la.');
 
-        $this->app->fiscal()->billingProfileService()->resolveForPayment($this->user('ana@hotelflex.test'), 1, '');
+        $this->app->fiscal()->billingProfileService()->resolveForPayment($this->user('ana@hotelflex.test'), '');
     }
 
     #[TestDox('Hóspede não usa os dados de faturamento de outra pessoa, mesmo mandando o id direto')]
@@ -32,16 +32,14 @@ final class FiscalBillingTest extends FiscalTestCase
 
         $this->expectExceptionMessage('Dados para a nota fiscal não encontrados');
 
-        $this->app->fiscal()->billingProfileService()->resolveForPayment($this->user('bruno@hotelflex.test'), 1, (string) $anaProfile);
+        $this->app->fiscal()->billingProfileService()->resolveForPayment($this->user('bruno@hotelflex.test'), (string) $anaProfile);
     }
 
     #[TestDox('Empresa: razão social e endereço vêm da consulta do CNPJ, não do que foi digitado')]
     public function testCompanyDataComesFromTheCnpjLookup(): void
     {
-        $profileId = $this->createBillingProfile('ana@hotelflex.test', self::COMPANY);
-        $profile = $this->app->fiscal()->billingProfileService()->listFor($this->user('ana@hotelflex.test'))[0];
+        $profile = $this->findProfile('ana@hotelflex.test', $this->createBillingProfile('ana@hotelflex.test', self::COMPANY));
 
-        $this->assertSame($profileId, $profile->id);
         $this->assertSame('Empresa Exemplo Viagens Ltda', $profile->name);
         $this->assertSame('3550308', $profile->address?->municipalityCode);
         $this->assertSame('ATIVA', $profile->company?->status);
@@ -58,9 +56,9 @@ final class FiscalBillingTest extends FiscalTestCase
     #[TestDox('CNPJ alfanumérico (formato novo) é aceito como tomador')]
     public function testAlphanumericCnpjCanBeTheTaker(): void
     {
-        $this->createBillingProfile('ana@hotelflex.test', [...self::COMPANY, 'document' => '12.ABC.345/01DE-35']);
+        $profileId = $this->createBillingProfile('ana@hotelflex.test', [...self::COMPANY, 'document' => '12.ABC.345/01DE-35']);
 
-        $this->assertSame('12ABC34501DE35', $this->app->fiscal()->billingProfileService()->listFor($this->user('ana@hotelflex.test'))[0]->document->value);
+        $this->assertSame('12ABC34501DE35', $this->findProfile('ana@hotelflex.test', $profileId)?->document->value);
     }
 
     #[TestDox('CPF inválido, e-mail inválido e estrangeiro sem país são recusados')]
@@ -71,6 +69,7 @@ final class FiscalBillingTest extends FiscalTestCase
             ['kind' => 'proprio', 'document' => '390.533.447-05', 'email' => 'nao-e-email'],
             ['kind' => 'estrangeiro', 'document' => 'AB123456', 'name' => 'John Smith', 'country' => ''],
         ];
+        $profilesBefore = $this->countRows('SELECT COUNT(*) FROM billing_profiles');
         $errors = 0;
         foreach ($attempts as $input) {
             try {
@@ -81,19 +80,30 @@ final class FiscalBillingTest extends FiscalTestCase
         }
 
         $this->assertSame(3, $errors);
-        $this->assertSame(0, $this->countRows('SELECT COUNT(*) FROM billing_profiles'));
+        $this->assertSame($profilesBefore, $this->countRows('SELECT COUNT(*) FROM billing_profiles'));
     }
 
-    #[TestDox('Hotel que exige CPF/CNPJ recusa "consumidor não identificado"; os outros aceitam')]
-    public function testHotelMayRequireAnIdentifiedTaker(): void
+    #[TestDox('Não existe reserva sem CPF/CNPJ: a antiga opção "consumidor" é recusada no servidor')]
+    public function testThereIsNoAnonymousOption(): void
     {
-        $service = $this->app->fiscal()->billingProfileService();
-        $this->assertNull($service->resolveForPayment($this->user('ana@hotelflex.test'), 1, BillingProfileService::ANONYMOUS_CHOICE));
-        $this->db->exec('UPDATE hotel_fiscal_profiles SET allows_anonymous_consumer = 0 WHERE hotel_id = 1');
+        $this->expectExceptionMessage('Dados para a nota fiscal não encontrados');
 
-        $this->expectExceptionMessage('Este hotel exige CPF ou CNPJ na nota fiscal.');
+        $this->app->fiscal()->billingProfileService()->resolveForPayment($this->user('ana@hotelflex.test'), 'consumidor');
+    }
 
-        $service->resolveForPayment($this->user('ana@hotelflex.test'), 1, BillingProfileService::ANONYMOUS_CHOICE);
+    #[TestDox('Inscrição estadual só para empresa: CPF com IE é recusado; IE da empresa (ou ISENTO) vai para a nota')]
+    public function testStateRegistrationOnlyForCompanies(): void
+    {
+        try {
+            $this->createBillingProfile('ana@hotelflex.test', ['kind' => 'proprio', 'document' => '390.533.447-05', 'state_registration' => '110042490114']);
+            $this->fail('Pessoa física não tem inscrição estadual');
+        } catch (DomainException $error) {
+            $this->assertStringContainsString('só para empresa', $error->getMessage());
+        }
+        $companyId = $this->createBillingProfile('ana@hotelflex.test', [...self::COMPANY, 'state_registration' => '110.042.490.114']);
+        $reservationId = $this->stayAndCheckOut('ana@hotelflex.test', 1, $companyId);
+
+        $this->assertSame('110042490114', $this->invoicesOf($reservationId)[0]->taker->stateRegistration);
     }
 
     #[TestDox('Cadastro removido some da lista, mas a nota já emitida guarda a própria cópia dos dados')]
@@ -104,7 +114,18 @@ final class FiscalBillingTest extends FiscalTestCase
 
         $this->app->fiscal()->billingProfileService()->archive($this->user('ana@hotelflex.test'), $profileId);
 
-        $this->assertSame([], $this->app->fiscal()->billingProfileService()->listFor($this->user('ana@hotelflex.test')));
+        $this->assertNull($this->findProfile('ana@hotelflex.test', $profileId));
         $this->assertSame('39053344705', $this->invoicesOf($reservationId)[0]->taker->document?->value);
+    }
+
+    private function findProfile(string $email, int $profileId): ?BillingProfile
+    {
+        foreach ($this->app->fiscal()->billingProfileService()->listFor($this->user($email)) as $profile) {
+            if ($profile->id === $profileId) {
+                return $profile;
+            }
+        }
+
+        return null;
     }
 }

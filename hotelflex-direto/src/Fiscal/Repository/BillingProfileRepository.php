@@ -21,17 +21,18 @@ final class BillingProfileRepository
     {
     }
 
-    public function create(int $userId, BillingKind $kind, string $name, TaxDocument $document, ?string $email, ?BillingAddress $address, string $country, ?CompanyRecord $company, DateTimeImmutable $now): int
+    public function create(int $userId, BillingKind $kind, string $name, TaxDocument $document, ?string $email, ?BillingAddress $address, string $country, ?CompanyRecord $company, ?string $stateRegistration, DateTimeImmutable $now): int
     {
         $statement = $this->connection->prepare(
-            'INSERT INTO billing_profiles (user_id, kind, name, document, email, country, street, street_number, district, city, state, postal_code, municipality_code,
+            'INSERT INTO billing_profiles (user_id, kind, name, document, email, country, street, street_number, district, city, state, postal_code, municipality_code, state_registration,
                 company_status, company_is_simples, company_is_mei, lookup_source, looked_up_at, created_at)
-             VALUES (:user_id, :kind, :name, :document, :email, :country, :street, :street_number, :district, :city, :state, :postal_code, :municipality_code,
+             VALUES (:user_id, :kind, :name, :document, :email, :country, :street, :street_number, :district, :city, :state, :postal_code, :municipality_code, :state_registration,
                 :company_status, :company_is_simples, :company_is_mei, :lookup_source, :looked_up_at, :created_at)',
         );
         $statement->execute([
             'user_id' => $userId, 'kind' => $kind->value, 'name' => $name, 'document' => $document->value, 'email' => $email, 'country' => $country,
             ...($address?->toRow() ?? self::EMPTY_ADDRESS),
+            'state_registration' => $stateRegistration,
             ...self::toCompanyColumns($company),
             'created_at' => $now->format(self::DATE_FORMAT),
         ]);

@@ -76,7 +76,7 @@ final class FiscalContainer
 
     public function billingProfileService(): BillingProfileService
     {
-        return new BillingProfileService($this->billingProfiles, $this->fiscalProfiles, $this->companyLookup(), new BillingProfileInputParser(), $this->clock);
+        return new BillingProfileService($this->billingProfiles, $this->companyLookup(), new BillingProfileInputParser(), $this->clock);
     }
 
     public function hotelFiscalService(): HotelFiscalService

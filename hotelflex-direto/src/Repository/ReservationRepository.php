@@ -70,7 +70,7 @@ final class ReservationRepository
         );
     }
 
-    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights, PaymentPlan $plan, ?int $billingProfileId = null): int
+    public function create(string $code, int $userId, int $roomId, DateTimeImmutable $checkInDate, int $nights, PaymentPlan $plan, int $billingProfileId): int
     {
         $statement = $this->connection->prepare(
             'INSERT INTO reservations (code, user_id, room_id, check_in_date, nights, payment_plan, discount_percent, billing_profile_id)

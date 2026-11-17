@@ -20,7 +20,7 @@ final readonly class Reservation
         public ReservationStatus $status,
         public ?PaymentPlan $paymentPlan = null,
         public int $discountPercent = 0,
-        /** Who the invoice goes to (null = consumer not identified). */
+        /** Who the invoice goes to. Null only for records created before CPF/CNPJ became mandatory. */
         public ?int $billingProfileId = null,
     ) {
     }

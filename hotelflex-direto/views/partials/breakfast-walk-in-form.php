@@ -27,8 +27,8 @@ use HotelFlex\Service\BreakfastService;
                 <input class="input" id="walk-in-name" name="customer_name" maxlength="120">
             </div>
             <div class="space-y-2">
-                <label class="label" for="walk-in-cpf">CPF na nota (opcional)</label>
-                <input class="input" id="walk-in-cpf" name="customer_cpf" inputmode="numeric" maxlength="14" pattern="[0-9.\-]{11,14}" placeholder="000.000.000-00">
+                <label class="label" for="walk-in-document">CPF ou CNPJ (nota fiscal)</label>
+                <input class="input" id="walk-in-document" name="customer_document" maxlength="18" placeholder="000.000.000-00" required>
             </div>
             <div class="space-y-2">
                 <label class="label" for="walk-in-people">Pessoas</label>

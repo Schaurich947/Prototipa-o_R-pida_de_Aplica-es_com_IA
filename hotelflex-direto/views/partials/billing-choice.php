@@ -1,12 +1,9 @@
 <?php
-
-use HotelFlex\Fiscal\Service\BillingProfileService;
-
 /**
  * "Who is the invoice for?" Asked before every payment; the taker may differ from the person who booked.
+ * The hotel must issue an invoice, so a CPF, CNPJ or foreign document is mandatory.
  *
  * @var list<HotelFlex\Fiscal\Domain\BillingProfile> $billingProfiles
- * @var bool $allowsAnonymous
  * @var string $billingReturnPath page to come back to after adding new invoice data
  */
 $addUrl = url('/faturamento?' . http_build_query(['voltar' => $billingReturnPath]));
@@ -23,18 +20,12 @@ $addUrl = url('/faturamento?' . http_build_query(['voltar' => $billingReturnPath
                 </span>
             </label>
         <?php endforeach; ?>
-        <?php if ($allowsAnonymous): ?>
-            <label class="flex items-start gap-3 rounded-lg border p-3 text-sm has-[:checked]:border-primary">
-                <input type="radio" name="billing_choice" value="<?= e(BillingProfileService::ANONYMOUS_CHOICE) ?>" class="mt-0.5 accent-primary" <?= $billingProfiles === [] ? 'checked' : '' ?> required>
-                <span>
-                    <span class="block font-medium">Consumidor, sem CPF na nota</span>
-                    <span class="text-muted-foreground">A nota sai sem identificação do tomador.</span>
-                </span>
-            </label>
-        <?php elseif ($billingProfiles === []): ?>
-            <p class="alert alert-error">Este hotel exige CPF ou CNPJ na nota. Cadastre os dados antes de continuar.</p>
+        <?php if ($billingProfiles === []): ?>
+            <p class="alert alert-error">Informe o CPF (ou CNPJ) para a nota fiscal antes de continuar: o hotel é obrigado a emiti-la.</p>
+            <a class="btn btn-primary btn-sm self-start" href="<?= e($addUrl) ?>">Informar CPF ou CNPJ</a>
+        <?php else: ?>
+            <a class="btn btn-outline btn-sm self-start" href="<?= e($addUrl) ?>">+ Nota para outra pessoa, empresa (CNPJ) ou estrangeiro</a>
         <?php endif; ?>
-        <a class="btn btn-outline btn-sm self-start" href="<?= e($addUrl) ?>">+ Nota para outra pessoa, empresa (CNPJ) ou estrangeiro</a>
         <p class="text-xs text-muted-foreground">A nota é emitida pelo hotel quando o serviço termina (no check-out), com o valor final.</p>
     </div>
 </fieldset>

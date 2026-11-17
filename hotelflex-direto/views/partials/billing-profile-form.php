@@ -65,6 +65,10 @@ $selectedKind = BillingKind::tryFrom($value('kind')) ?? BillingKind::Self;
                 <input class="input" type="email" id="billing-email" name="email" maxlength="190" value="<?= e($value('email')) ?>">
             </div>
             <div class="space-y-2">
+                <label class="label" for="billing-state-registration">Inscrição estadual (só empresa; opcional)</label>
+                <input class="input" id="billing-state-registration" name="state_registration" maxlength="20" placeholder="números ou ISENTO" value="<?= e($value('state_registration')) ?>">
+            </div>
+            <div class="space-y-2">
                 <label class="label" for="billing-country">País do documento (só estrangeiro)</label>
                 <input class="input" id="billing-country" name="country" maxlength="2" pattern="[A-Za-z]{2}" placeholder="ex.: AR, US, PT" value="<?= e($value('country')) ?>">
             </div>

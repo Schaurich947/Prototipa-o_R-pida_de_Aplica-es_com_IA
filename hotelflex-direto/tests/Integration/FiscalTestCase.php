@@ -17,11 +17,11 @@ abstract class FiscalTestCase extends IntegrationTestCase
         return $this->app->fiscal()->billingProfileService()->create($this->user($email), $input);
     }
 
-    /** Books one night today (01/12/2026), pays, checks in and checks out. */
+    /** Books one night today (01/12/2026) with the guest's own CPF unless another profile is given, pays, checks in and checks out. */
     protected function stayAndCheckOut(string $guestEmail, int $roomId = 1, ?int $billingProfileId = null, string $staffEmail = 'recepcao.centro@hotelflex.test'): int
     {
         $this->clock->travelTo(self::DEFAULT_NOW);
-        $reservationId = $this->app->reservationService()->book($this->user($guestEmail), $roomId, self::dates('2026-12-01', '2026-12-02'), PaymentPlan::Full, true, $billingProfileId);
+        $reservationId = $this->app->reservationService()->book($this->user($guestEmail), $roomId, self::dates('2026-12-01', '2026-12-02'), PaymentPlan::Full, true, $billingProfileId ?? self::BILLING_PROFILES[$guestEmail]);
         $this->payFirstCharge($reservationId, $staffEmail);
         $this->app->roomService()->checkIn($this->user($staffEmail), $reservationId);
         $this->clock->travelTo('2026-12-02 11:00:00');

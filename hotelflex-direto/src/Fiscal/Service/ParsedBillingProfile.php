@@ -19,6 +19,7 @@ final readonly class ParsedBillingProfile
         public ?BillingAddress $address,
         public string $country,
         public ?CompanyRecord $company,
+        public ?string $stateRegistration,
     ) {
     }
 }

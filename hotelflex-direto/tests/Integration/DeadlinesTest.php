@@ -81,18 +81,18 @@ final class DeadlinesTest extends IntegrationTestCase
     {
         $staff = $this->user('recepcao.centro@hotelflex.test');
         $this->clock->travelTo('2026-12-01 08:00:00');
-        $this->app->breakfastService()->sellWalkIn($staff, 1, 2, PaymentMethod::Cash, 'Visitante');
+        $this->app->breakfastService()->sellWalkIn($staff, 1, 2, PaymentMethod::Cash, 'Visitante', '529.982.247-25');
         $this->assertSame(1, $this->countRows("SELECT COUNT(*) FROM breakfast_bookings WHERE walk_in_name = 'Visitante' AND total_cents = 11000"));
 
         $this->clock->travelTo('2026-12-01 10:00:00');
         $this->expectExceptionObject(new DomainException('O café desse dia já terminou. Escolha outra data.'));
-        $this->app->breakfastService()->sellWalkIn($staff, 1, 1, PaymentMethod::Cash, '');
+        $this->app->breakfastService()->sellWalkIn($staff, 1, 1, PaymentMethod::Cash, '', '529.982.247-25');
     }
 
     #[TestDox('Café com Pix sem comprovante até o início do café expira e libera os lugares')]
     public function testUnpaidBreakfastExpires(): void
     {
-        $this->app->breakfastService()->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-02'), 4, BreakfastPaymentOption::Pix);
+        $this->app->breakfastService()->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-02'), 4, BreakfastPaymentOption::Pix, self::BILLING_PROFILES['carla@hotelflex.test']);
         $this->clock->travelTo('2026-12-02 06:01:00');
 
         $this->assertSame(1, $this->app->breakfastService()->expireOverdue());

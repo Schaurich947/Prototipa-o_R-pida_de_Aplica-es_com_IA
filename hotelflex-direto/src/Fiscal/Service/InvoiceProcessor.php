@@ -55,7 +55,11 @@ final class InvoiceProcessor
     private function process(Invoice $invoice): string
     {
         $issuerProfile = $this->fiscalProfiles->findByHotel($invoice->hotelId);
-        $missingData = $issuerProfile === null ? 'Cadastre os dados fiscais do hotel antes de emitir.' : $issuerProfile->getMissingData($invoice->kind);
+        $missingData = match (true) {
+            !$invoice->taker->isIdentified() => 'Nota sem CPF ou CNPJ do tomador: peça os dados ao cliente antes de emitir.',
+            $issuerProfile === null => 'Cadastre os dados fiscais do hotel antes de emitir.',
+            default => $issuerProfile->getMissingData($invoice->kind),
+        };
         if ($missingData !== null) {
             $this->invoices->markRejected($invoice->id, $missingData);
 

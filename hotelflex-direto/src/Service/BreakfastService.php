@@ -41,8 +41,8 @@ final class BreakfastService
     ) {
     }
 
-    /** @param int|null $billingProfileId already checked by BillingProfileService (null = consumer not identified) */
-    public function book(User $customer, int $hotelId, DateTimeImmutable $date, int $people, BreakfastPaymentOption $option, ?int $billingProfileId = null): int
+    /** @param int $billingProfileId who the invoice goes to, already checked by BillingProfileService */
+    public function book(User $customer, int $hotelId, DateTimeImmutable $date, int $people, BreakfastPaymentOption $option, int $billingProfileId): int
     {
         $hotel = $this->getHotelSellingBreakfast($hotelId);
         $this->assertBookable($hotel, $date, $people);
@@ -138,10 +138,10 @@ final class BreakfastService
         return $expired;
     }
 
-    /** Sale at the counter on the day, at the higher walk-in price, only while seats are left. Optional "CPF na nota". */
-    public function sellWalkIn(User $actor, int $hotelId, int $people, PaymentMethod $method, string $customerName, string $customerCpf = ''): void
+    /** Sale at the counter on the day, at the higher walk-in price, only while seats are left. CPF or CNPJ is mandatory for the invoice. */
+    public function sellWalkIn(User $actor, int $hotelId, int $people, PaymentMethod $method, string $customerName, string $customerDocument): void
     {
-        $cpf = $customerCpf !== '' ? TaxDocument::cpf($customerCpf) : null;
+        $document = $customerDocument !== '' ? TaxDocument::fromBrazilian($customerDocument) : throw new DomainException('Informe o CPF ou CNPJ do cliente: é obrigatório na nota fiscal.');
         $hotel = $this->getHotelSellingBreakfast($hotelId);
         if (!$actor->canManageHotel($hotel->id) || !$hotel->sellsWalkInBreakfast()) {
             throw new DomainException('Este hotel não vende café da manhã na hora.');
@@ -152,12 +152,12 @@ final class BreakfastService
             throw new DomainException('Escolha como foi pago.');
         }
         $name = mb_substr(trim($customerName), 0, 120);
-        $this->transaction->run(function () use ($actor, $hotel, $today, $people, $method, $name, $cpf): void {
+        $this->transaction->run(function () use ($actor, $hotel, $today, $people, $method, $name, $document): void {
             $this->bookings->lockHotel($hotel->id);
             $this->assertSeatsLeft($this->getAvailability($hotel, $today), $people);
             $row = $this->rows->build($actor, $hotel, $today, $people, BreakfastPaymentOption::WalkIn);
-            $bookingId = $this->bookings->create([...$row, 'status' => BreakfastStatus::Served->value, 'is_paid' => 1, 'paid_method' => $method->value, 'walk_in_name' => $name ?: null, 'walk_in_document' => $cpf?->value]);
-            $this->invoices->requestForBreakfast($this->getBooking($bookingId), $cpf !== null ? InvoiceTaker::withCpfOnly($name, $cpf) : null);
+            $bookingId = $this->bookings->create([...$row, 'status' => BreakfastStatus::Served->value, 'is_paid' => 1, 'paid_method' => $method->value, 'walk_in_name' => $name ?: null, 'walk_in_document' => $document->value]);
+            $this->invoices->requestForBreakfast($this->getBooking($bookingId), InvoiceTaker::withDocumentOnly($name, $document));
         });
     }
 

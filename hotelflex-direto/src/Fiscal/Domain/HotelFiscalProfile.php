@@ -12,7 +12,7 @@ final readonly class HotelFiscalProfile
         public string $legalName,
         public TaxDocument $cnpj,
         public string $municipalRegistration,
-        /** Only needed to sell breakfast to non-guests with an NFC-e (ICMS). */
+        /** The hotel's own state registration: the SEFAZ requires it to issue the breakfast NFC-e (ICMS). Never asked of CPF customers. */
         public ?string $stateRegistration,
         public TaxRegime $taxRegime,
         public string $municipalityCode,
@@ -23,7 +23,6 @@ final readonly class HotelFiscalProfile
         public int $icmsRateBasisPoints,
         public string $series,
         public IssWithholdingRule $issWithholding,
-        public bool $allowsAnonymousConsumer,
     ) {
     }
 
@@ -44,7 +43,6 @@ final readonly class HotelFiscalProfile
             (int) $row['icms_rate_bp'],
             (string) $row['series'],
             IssWithholdingRule::from((string) $row['iss_withholding']),
-            (bool) $row['allows_anonymous_consumer'],
         );
     }
 

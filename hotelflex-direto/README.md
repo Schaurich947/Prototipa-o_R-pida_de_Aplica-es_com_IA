@@ -88,7 +88,8 @@ Os testes não mexem no banco do sistema: usam `<DB_NAME>_test`, recriado a cada
 | Hospedagem (diárias, horas extras, diferenças) | NFS-e (serviço, LC 116 item 09.01) | ISS | No **check-out**, com o valor final (pago − créditos) |
 | Café avulso e venda na hora | NFC-e (consumidor) | ICMS | Quando o café é **servido** |
 
-- **Antes de pagar**, o cliente escolhe em nome de quem sai a nota: ele mesmo (CPF), outra pessoa (CPF), uma empresa (CNPJ) ou estrangeiro (passaporte e país). O hotel pode aceitar ou não "consumidor sem CPF". Os cadastros ficam em **Dados para nota fiscal**.
+- **Antes de pagar**, o cliente escolhe em nome de quem sai a nota: ele mesmo (CPF), outra pessoa (CPF), uma empresa (CNPJ) ou estrangeiro (passaporte e país). **Sem CPF, CNPJ ou documento estrangeiro não há reserva nem café**: o hotel é obrigado a emitir a nota. Na venda na hora, a recepção digita o CPF ou CNPJ. Os cadastros ficam em **Dados para nota fiscal**.
+- **Inscrição estadual:** só empresa tomadora pode ter (número ou ISENTO); para CPF o campo é recusado. A inscrição estadual do **hotel** é outra coisa: a SEFAZ exige para o hotel emitir a NFC-e do café.
 - **CNPJ:** validação dos dígitos (inclusive o CNPJ alfanumérico de julho de 2026) e consulta da situação na Receita. Razão social e endereço vêm da consulta, e empresa baixada ou inapta não pode ser tomadora. `CNPJ_LOOKUP_DRIVER=simulacao` (offline) ou `brasilapi` (dados abertos da Receita, gratuito).
 - **ISS retido:** o hotel escolhe a regra (nunca, ou empresas do mesmo município, exceto Simples e MEI).
 - **Reforma tributária:** CBS 0,9% e IBS 0,1% informativos (ano de teste de 2026), em uma tabela de regras com data de vigência. Na hospedagem e na alimentação, a empresa tomadora **não** aproveita crédito (regimes específicos da LC 214/2025).

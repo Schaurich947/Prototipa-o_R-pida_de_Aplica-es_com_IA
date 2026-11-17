@@ -65,16 +65,16 @@ final class RoomAvailabilityTest extends IntegrationTestCase
         $this->book('ana@hotelflex.test', 1, '2026-12-10', '2026-12-12');
         $this->book('bruno@hotelflex.test', 2, '2026-12-10', '2026-12-12');
         $breakfast = $this->app->breakfastService();
-        $breakfast->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-11'), 6, BreakfastPaymentOption::Desk);
+        $breakfast->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-11'), 6, BreakfastPaymentOption::Desk, 3);
 
         try {
-            $breakfast->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-11'), 1, BreakfastPaymentOption::Pix);
+            $breakfast->book($this->user('carla@hotelflex.test'), 1, new DateTimeImmutable('2026-12-11'), 1, BreakfastPaymentOption::Pix, 3);
             $this->fail('Não deveria haver lugar para mais uma pessoa.');
         } catch (DomainException $error) {
             $this->assertSame('Não há mais lugares nesse dia.', $error->getMessage());
         }
         $this->clock->travelTo('2026-12-11 08:00:00');
         $this->expectExceptionObject(new DomainException('Não há mais lugares nesse dia.'));
-        $breakfast->sellWalkIn($this->user('recepcao.centro@hotelflex.test'), 1, 1, PaymentMethod::Cash, '');
+        $breakfast->sellWalkIn($this->user('recepcao.centro@hotelflex.test'), 1, 1, PaymentMethod::Cash, '', '529.982.247-25');
     }
 }

@@ -34,9 +34,9 @@ while (microtime(true) < (float) $startAt) {
 
 try {
     match ($action) {
-        'book' => $app->reservationService()->book($user($args[0]), (int) $args[1], new StayDates(new DateTimeImmutable($args[2]), new DateTimeImmutable($args[3])), PaymentPlan::Full, true),
+        'book' => $app->reservationService()->book($user($args[0]), (int) $args[1], new StayDates(new DateTimeImmutable($args[2]), new DateTimeImmutable($args[3])), PaymentPlan::Full, true, IntegrationTestCase::BILLING_PROFILES[$args[0]]),
         'approve' => $app->chargeService()->reviewReceipt($user($args[0]), (int) $args[1], true, ''),
-        'breakfast' => $app->breakfastService()->book($user($args[0]), 1, new DateTimeImmutable($args[1]), (int) $args[2], BreakfastPaymentOption::Desk),
+        'breakfast' => $app->breakfastService()->book($user($args[0]), 1, new DateTimeImmutable($args[1]), (int) $args[2], BreakfastPaymentOption::Desk, IntegrationTestCase::BILLING_PROFILES[$args[0]]),
         'dispatch' => $app->dispatcher()->processDue(200),
         'invoices' => $app->fiscal()->invoiceProcessor()->processDue(null, 100),
     };

@@ -17,7 +17,7 @@ use HotelFlex\View\View;
 final class BillingProfileController
 {
     public const PATH = '/faturamento';
-    private const FORM_FIELDS = ['kind', 'name', 'document', 'email', 'country', 'street', 'number', 'district', 'city', 'state', 'postal_code', 'municipality_code'];
+    private const FORM_FIELDS = ['kind', 'name', 'document', 'email', 'state_registration', 'country', 'street', 'number', 'district', 'city', 'state', 'postal_code', 'municipality_code'];
 
     public function __construct(
         private readonly Auth $auth,

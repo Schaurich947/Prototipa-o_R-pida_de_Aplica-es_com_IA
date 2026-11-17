@@ -18,7 +18,6 @@ CREATE TABLE hotel_fiscal_profiles (
     series VARCHAR(5) NOT NULL DEFAULT '1',
     next_number INT UNSIGNED NOT NULL DEFAULT 1,
     iss_withholding ENUM('nunca', 'empresa-mesma-cidade') NOT NULL DEFAULT 'nunca',
-    allows_anonymous_consumer TINYINT(1) NOT NULL DEFAULT 1,
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_fiscal_hotel FOREIGN KEY (hotel_id) REFERENCES hotels (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -67,6 +66,7 @@ CREATE TABLE invoices (
     taker_address VARCHAR(255) NULL,
     taker_municipality_code CHAR(7) NULL,
     taker_is_simples TINYINT(1) NULL,
+    taker_state_registration VARCHAR(20) NULL,
     description VARCHAR(500) NOT NULL,
     amount_cents INT UNSIGNED NOT NULL,
     iss_cents INT UNSIGNED NOT NULL DEFAULT 0,
