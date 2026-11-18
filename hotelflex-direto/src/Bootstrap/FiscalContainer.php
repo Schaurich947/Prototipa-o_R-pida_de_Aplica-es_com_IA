@@ -13,6 +13,7 @@ use HotelFlex\Fiscal\Lookup\BrasilApiCompanyLookup;
 use HotelFlex\Fiscal\Lookup\CachedCompanyLookup;
 use HotelFlex\Fiscal\Lookup\CompanyLookup;
 use HotelFlex\Fiscal\Lookup\SimulatedCompanyLookup;
+use HotelFlex\Fiscal\Pdf\InvoicePdfRenderer;
 use HotelFlex\Fiscal\Repository\BillingProfileRepository;
 use HotelFlex\Fiscal\Repository\CompanyLookupCache;
 use HotelFlex\Fiscal\Repository\HotelFiscalProfileRepository;
@@ -22,14 +23,17 @@ use HotelFlex\Fiscal\Repository\TaxRuleRepository;
 use HotelFlex\Fiscal\Service\BillingProfileInputParser;
 use HotelFlex\Fiscal\Service\BillingProfileService;
 use HotelFlex\Fiscal\Service\HotelFiscalService;
+use HotelFlex\Fiscal\Service\InvoicePdfService;
 use HotelFlex\Fiscal\Service\InvoiceProcessor;
 use HotelFlex\Fiscal\Service\InvoiceRequester;
 use HotelFlex\Fiscal\Service\InvoiceService;
 use HotelFlex\Fiscal\Service\MonthlyTaxSummary;
+use HotelFlex\Repository\BreakfastRepository;
 use HotelFlex\Repository\ChargeRepository;
 use HotelFlex\Repository\HotelRepository;
 use HotelFlex\Repository\ReservationRepository;
 use HotelFlex\Service\StayViewFactory;
+use HotelFlex\View\View;
 use PDO;
 
 /** Wiring of the fiscal module, kept apart so it can grow (or leave) on its own. */
@@ -82,6 +86,17 @@ final class FiscalContainer
     public function hotelFiscalService(): HotelFiscalService
     {
         return new HotelFiscalService($this->fiscalProfiles, $this->hotels);
+    }
+
+    public function invoicePdfService(View $view): InvoicePdfService
+    {
+        return new InvoicePdfService($this->invoiceService(), $this->fiscalProfiles, $this->hotels, new BreakfastRepository($this->connection), new InvoicePdfRenderer($view, $this->projectRoot));
+    }
+
+    /** Public base URL for links printed in documents (QR codes); empty = the current host. */
+    public function getAppUrl(): string
+    {
+        return $this->env->get('APP_URL', '');
     }
 
     public function monthlyTaxSummary(): MonthlyTaxSummary

@@ -75,8 +75,8 @@ final class InvoiceProcessor
     {
         return $this->transaction->run(function () use ($invoice, $issuerProfile): Invoice {
             if ($invoice->number === null) {
-                $number = $this->fiscalProfiles->reserveNextNumber($invoice->hotelId);
-                $this->invoices->assignNumber($invoice->id, $issuerProfile->series, $number, DpsId::build($issuerProfile, $number));
+                $number = $this->fiscalProfiles->reserveNextNumber($invoice->hotelId, $invoice->kind);
+                $this->invoices->assignNumber($invoice->id, $issuerProfile->series, $number, DpsId::build($issuerProfile, $number, $invoice->kind));
             }
             $isIssWithheld = $issuerProfile->issWithholding->isWithheldBy($invoice->taker, $issuerProfile->municipalityCode);
             $rules = $this->taxRules->findValid($invoice->serviceType, $invoice->competenceDate);

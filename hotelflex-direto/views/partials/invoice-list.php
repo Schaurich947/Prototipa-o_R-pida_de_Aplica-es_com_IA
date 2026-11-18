@@ -20,7 +20,12 @@
                 <p class="font-medium"><?= e($invoice->kind->label()) ?> <?= e($invoice->formatNumber()) ?> · <?= e(formatMoney($invoice->amountCents)) ?></p>
                 <p class="text-muted-foreground"><?= e($invoice->taker->name) ?> · <span class="badge <?= e($invoice->status->badgeClass()) ?>"><?= e($invoice->status->label()) ?></span></p>
             </div>
-            <a class="btn btn-outline btn-sm" href="<?= e(url("/notas/{$invoice->id}")) ?>">Ver nota</a>
+            <span class="flex gap-2">
+                <a class="btn btn-outline btn-sm" href="<?= e(url("/notas/{$invoice->id}")) ?>">Ver nota</a>
+                <?php if ($invoice->accessKey !== null): ?>
+                    <a class="btn btn-outline btn-sm" href="<?= e(url("/notas/{$invoice->id}/pdf")) ?>" target="_blank" rel="noopener">PDF</a>
+                <?php endif; ?>
+            </span>
         </div>
     <?php endforeach; ?>
 </section>

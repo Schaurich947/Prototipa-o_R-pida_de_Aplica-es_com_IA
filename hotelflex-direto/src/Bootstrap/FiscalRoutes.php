@@ -28,5 +28,6 @@ final class FiscalRoutes
         $router->post('/hotel/notas/{id}/reenviar', $invoices('requeue'), Navigation::HOTEL_ROLES);
         $router->get('/notas/{id}', $invoices('showDocument'), Navigation::SIGNED_IN_ROLES);
         $router->get('/notas/{id}/xml', $invoices('downloadXml'), Navigation::SIGNED_IN_ROLES);
+        $router->get('/notas/{id}/pdf', static fn (...$args) => $container->fiscalControllers()->invoicePdfs()->download(...$args), Navigation::SIGNED_IN_ROLES);
     }
 }

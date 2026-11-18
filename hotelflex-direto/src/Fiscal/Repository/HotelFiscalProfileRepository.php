@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace HotelFlex\Fiscal\Repository;
 
 use HotelFlex\Fiscal\Domain\HotelFiscalProfile;
+use HotelFlex\Fiscal\Domain\InvoiceKind;
 use PDO;
 
 final class HotelFiscalProfileRepository
@@ -22,7 +23,7 @@ final class HotelFiscalProfileRepository
         return $row ? HotelFiscalProfile::fromRow($row) : null;
     }
 
-    /** Saving never touches the invoice counter (next_number). */
+    /** Saving never touches the invoice counters. */
     public function save(HotelFiscalProfile $profile): void
     {
         $statement = $this->connection->prepare(
@@ -44,13 +45,17 @@ final class HotelFiscalProfileRepository
         ]);
     }
 
-    /** Must run inside a transaction: the row lock makes the numbering sequential with parallel workers. */
-    public function reserveNextNumber(int $hotelId): int
+    /**
+     * Must run inside a transaction: the row lock makes the numbering sequential with parallel workers.
+     * Each invoice model keeps its own sequence (the column name comes from the enum, never from input).
+     */
+    public function reserveNextNumber(int $hotelId, InvoiceKind $kind): int
     {
-        $statement = $this->connection->prepare('SELECT next_number FROM hotel_fiscal_profiles WHERE hotel_id = :hotel_id FOR UPDATE');
+        $column = $kind === InvoiceKind::Nfse ? 'next_nfse_number' : 'next_nfce_number';
+        $statement = $this->connection->prepare("SELECT {$column} FROM hotel_fiscal_profiles WHERE hotel_id = :hotel_id FOR UPDATE");
         $statement->execute(['hotel_id' => $hotelId]);
         $number = (int) $statement->fetchColumn();
-        $this->connection->prepare('UPDATE hotel_fiscal_profiles SET next_number = next_number + 1 WHERE hotel_id = :hotel_id')->execute(['hotel_id' => $hotelId]);
+        $this->connection->prepare("UPDATE hotel_fiscal_profiles SET {$column} = {$column} + 1 WHERE hotel_id = :hotel_id")->execute(['hotel_id' => $hotelId]);
 
         return $number;
     }

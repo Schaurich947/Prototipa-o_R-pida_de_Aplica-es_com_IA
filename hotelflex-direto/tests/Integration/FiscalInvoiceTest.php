@@ -87,7 +87,7 @@ final class FiscalInvoiceTest extends FiscalTestCase
         $this->assertSame(1, $this->processQueue()['authorized']);
 
         $this->assertSame(1, $this->invoicesOf($reservationId)[0]->number);
-        $this->assertSame(2, $this->countRows('SELECT next_number FROM hotel_fiscal_profiles WHERE hotel_id = 1'), 'Nenhum número gasto à toa');
+        $this->assertSame(2, $this->countRows('SELECT next_nfse_number FROM hotel_fiscal_profiles WHERE hotel_id = 1'), 'Nenhum número gasto à toa');
     }
 
     #[TestDox('Resposta perdida (o emissor autorizou, mas a conexão caiu): a nova tentativa consulta antes e não emite em dobro')]

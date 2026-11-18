@@ -26,6 +26,7 @@ $taxRows = [
     <a class="btn btn-ghost" href="<?= e(url($currentUser->role === Role::Guest ? '/hospede/reservas' : '/hotel/notas')) ?>">← Voltar</a>
     <button type="button" class="btn btn-primary" data-print>Imprimir / salvar PDF</button>
     <?php if ($invoice->accessKey !== null): ?>
+        <a class="btn btn-outline" href="<?= e(url("/notas/{$invoice->id}/pdf")) ?>" target="_blank" rel="noopener"><?= $isServiceInvoice ? 'PDF (DANFSe)' : 'PDF (DANFE NFC-e)' ?></a>
         <a class="btn btn-outline" href="<?= e(url("/notas/{$invoice->id}/xml")) ?>">Baixar XML</a>
     <?php endif; ?>
 </div>

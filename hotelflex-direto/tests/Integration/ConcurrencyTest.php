@@ -84,7 +84,7 @@ final class ConcurrencyTest extends IntegrationTestCase
 
         $this->assertSame(12, $this->countRows("SELECT COUNT(*) FROM invoices WHERE status = 'authorized'"));
         $this->assertSame(12, $this->countRows('SELECT COUNT(DISTINCT number) FROM invoices WHERE number BETWEEN 1 AND 12'));
-        $this->assertSame(13, $this->countRows('SELECT next_number FROM hotel_fiscal_profiles WHERE hotel_id = 1'));
+        $this->assertSame(13, $this->countRows('SELECT next_nfse_number FROM hotel_fiscal_profiles WHERE hotel_id = 1'));
         $this->assertSame(12, $this->countRows("SELECT COUNT(*) FROM tax_ledger WHERE tax = 'iss'"), 'ISS lançado uma vez por nota');
         $this->assertCount(12, glob($this->storageRoot . '/storage/fiscal/*.xml'));
     }

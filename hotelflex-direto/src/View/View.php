@@ -28,6 +28,16 @@ final class View
         echo $this->capture("layouts/{$layout}", [...$data, 'content' => $content]);
     }
 
+    /**
+     * Standalone document (e.g. the HTML of a PDF), without the app layout.
+     *
+     * @param array<string, mixed> $data
+     */
+    public function renderDocument(string $template, array $data = []): string
+    {
+        return $this->capture("pdf/{$template}", $data);
+    }
+
     /** @param array<string, mixed> $data */
     public function partial(string $name, array $data = []): string
     {

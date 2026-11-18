@@ -73,7 +73,7 @@ INSERT INTO breakfast_bookings (code, user_id, hotel_id, breakfast_date, people,
 -- ===== Módulo fiscal (dados fictícios de SIMULAÇÃO) =====
 -- Centro: tem inscrição estadual (emite NFC-e do café) e empresas de São Paulo retêm o ISS.
 -- Mar Azul: sem inscrição estadual, então a NFC-e do café avulso é rejeitada até o cadastro.
-INSERT INTO hotel_fiscal_profiles (hotel_id, legal_name, cnpj, municipal_registration, state_registration, tax_regime, municipality_code, address, service_code, iss_rate_bp, icms_rate_bp, series, next_number, iss_withholding) VALUES
+INSERT INTO hotel_fiscal_profiles (hotel_id, legal_name, cnpj, municipal_registration, state_registration, tax_regime, municipality_code, address, service_code, iss_rate_bp, icms_rate_bp, series, next_nfse_number, iss_withholding) VALUES
     (1, 'HotelFlex Centro Hospedagem Ltda (simulação)', '77888999000181', '1234567', '110042490114', 'presumido', '3550308', 'Rua da Consolação, 100 - Centro - São Paulo/SP - CEP 01301-000', '09.01', 500, 1800, '1', 2, 'empresa-mesma-cidade'),
     (2, 'Pousada Mar Azul Ltda ME (simulação)',         '98765000000187', '7654321', NULL,           'simples',   '4205407', 'Av. Beira-Mar Norte, 2000 - Centro - Florianópolis/SC - CEP 88015-000', '09.01', 300, 0, '1', 1, 'nunca');
 

@@ -36,6 +36,9 @@ $taxes = $invoice->taxes;
     </td>
     <td class="space-y-2">
         <a class="btn btn-outline btn-sm" href="<?= e(url("/notas/{$invoice->id}")) ?>">Ver</a>
+        <?php if ($invoice->accessKey !== null): ?>
+            <a class="btn btn-outline btn-sm" href="<?= e(url("/notas/{$invoice->id}/pdf")) ?>" target="_blank" rel="noopener">PDF</a>
+        <?php endif; ?>
         <?php if ($invoice->status === InvoiceStatus::Rejected): ?>
             <form method="post" action="<?= e(url("/hotel/notas/{$invoice->id}/reenviar")) ?>">
                 <?= $view->partial('csrf-field') ?>

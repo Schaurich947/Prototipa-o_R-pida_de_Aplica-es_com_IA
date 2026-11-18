@@ -16,7 +16,9 @@ CREATE TABLE hotel_fiscal_profiles (
     iss_rate_bp SMALLINT UNSIGNED NOT NULL,
     icms_rate_bp SMALLINT UNSIGNED NOT NULL DEFAULT 0,
     series VARCHAR(5) NOT NULL DEFAULT '1',
-    next_number INT UNSIGNED NOT NULL DEFAULT 1,
+    -- NFS-e (serviço) e NFC-e (consumidor) são modelos diferentes: cada um tem a sua numeração.
+    next_nfse_number INT UNSIGNED NOT NULL DEFAULT 1,
+    next_nfce_number INT UNSIGNED NOT NULL DEFAULT 1,
     iss_withholding ENUM('nunca', 'empresa-mesma-cidade') NOT NULL DEFAULT 'nunca',
     updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT fk_fiscal_hotel FOREIGN KEY (hotel_id) REFERENCES hotels (id)

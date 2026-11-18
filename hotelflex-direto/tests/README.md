@@ -35,6 +35,7 @@ Datas e conflitos de reserva
 | `ConcurrencyTest` | Integração | Ações simultâneas de verdade (processos paralelos): reserva dupla, aprovação dupla, lotação, filas de mensagens e de notas |
 | `tests/Fiscal` | Unitário | CPF e CNPJ (inclusive alfanumérico), cálculo de ISS, ICMS, CBS e IBS, retenção do ISS |
 | `FiscalBillingTest` | Integração | Dados para a nota antes do pagamento: CPF/CNPJ obrigatório, dados de outra pessoa, CNPJ baixado, consulta do CNPJ, inscrição estadual só para empresa |
+| `FiscalPdfTest` | Integração | PDF da nota: DANFSe e DANFE NFC-e, numeração própria de cada modelo, acesso só de quem pode ver a nota |
 | `FiscalInvoiceTest` | Integração | Emissão: valor final no check-out, tomador diferente, numeração, emissor fora do ar, resposta perdida, cancelamento, café |
 | `tests/Performance` | Volume | Tempo das telas principais com dezenas de milhares de registros |
 

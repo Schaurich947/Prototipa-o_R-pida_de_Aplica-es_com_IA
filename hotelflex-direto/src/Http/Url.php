@@ -35,6 +35,24 @@ final class Url
         return self::$basePath . '/' . ltrim($path, '/');
     }
 
+    /**
+     * Full URL (for QR codes). APP_URL wins; otherwise the current host, accepted only if it looks like a host name,
+     * so a forged Host header cannot plant another site in a document.
+     *
+     * @param array<string, mixed> $server
+     */
+    public static function toAbsolute(string $path, string $appUrl, array $server): string
+    {
+        if ($appUrl !== '') {
+            return rtrim($appUrl, '/') . '/' . ltrim($path, '/');
+        }
+        $host = (string) ($server['HTTP_HOST'] ?? 'localhost');
+        $host = preg_match('/^[A-Za-z0-9.\-]+(:\d{1,5})?$/', $host) ? $host : 'localhost';
+        $scheme = ($server['HTTPS'] ?? 'off') !== 'off' ? 'https' : 'http';
+
+        return "{$scheme}://{$host}" . self::to($path);
+    }
+
     /** Converts the browser path into the app path used by the router. */
     public static function stripBasePath(string $requestPath): string
     {

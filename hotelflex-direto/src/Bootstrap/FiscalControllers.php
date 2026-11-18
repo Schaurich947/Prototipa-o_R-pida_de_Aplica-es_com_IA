@@ -11,6 +11,7 @@ use HotelFlex\Http\Controller\ActionRunner;
 use HotelFlex\Http\Controller\BillingProfileController;
 use HotelFlex\Http\Controller\HotelFiscalController;
 use HotelFlex\Http\Controller\InvoiceController;
+use HotelFlex\Http\Controller\InvoicePdfController;
 use HotelFlex\Http\Session;
 use HotelFlex\Repository\HotelRepository;
 use HotelFlex\View\View;
@@ -38,6 +39,11 @@ final class FiscalControllers
     public function hotelFiscal(): HotelFiscalController
     {
         return new HotelFiscalController($this->auth, $this->session, $this->context, $this->fiscal->hotelFiscalService(), $this->actions, $this->view);
+    }
+
+    public function invoicePdfs(): InvoicePdfController
+    {
+        return new InvoicePdfController($this->auth, $this->fiscal->invoicePdfService($this->view), $this->fiscal->getAppUrl());
     }
 
     public function invoices(): InvoiceController
