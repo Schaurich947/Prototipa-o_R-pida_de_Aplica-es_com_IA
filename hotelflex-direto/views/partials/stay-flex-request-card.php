@@ -32,10 +32,13 @@ $suggestedHours = min($currentHours + 1, $stay->getMaxHours($type));
             <?= $view->partial('flex-hours-slider', ['stay' => $stay, 'type' => $type, 'hours' => $suggestedHours, 'inputId' => "guest-{$type->value}"]) ?>
         </div>
         <?php if ($stay->getMaxHours($type) > 0): ?>
-            <footer class="card-footer">
+            <footer class="card-footer flex-col items-stretch">
                 <button type="submit" class="btn btn-primary btn-block" <?= $hasPendingRequest ? 'disabled' : '' ?>>
-                    <?= $hasPendingRequest ? 'Pedido enviado · para mudar, cancele-o em "Pedidos ao hotel"' : 'Pedir ao hotel' ?>
+                    <?= $hasPendingRequest ? 'Pedido enviado' : 'Pedir ao hotel' ?>
                 </button>
+                <?php if ($hasPendingRequest): ?>
+                    <p class="text-center text-xs text-muted-foreground">Para mudar, cancele o pedido em "Pedidos ao hotel".</p>
+                <?php endif; ?>
             </footer>
         <?php endif; ?>
     </form>
